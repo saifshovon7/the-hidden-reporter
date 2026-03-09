@@ -1,136 +1,164 @@
-/* main.js — The Hidden Reporter
-   Minimal JS: search toggle, search page, popular articles,
-   view count tracking */
-
 'use strict';
+/**
+ * main.js — The Hidden Reporter
+ * Client-side interactions: header, search, nav, view tracking, popular articles
+ */
 
-// ── Search bar toggle ─────────────────────────────────────
+// ── Sticky header scroll effect ───────────────────────────────────────────────
+(function () {
+  const header = document.getElementById('site-header');
+  if (!header) return;
+  let lastY = 0;
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    header.classList.toggle('scrolled', y > 10);
+    lastY = y;
+  }, { passive: true });
+})();
+
+// ── Search toggle ─────────────────────────────────────────────────────────────
 function toggleSearch() {
   const bar = document.getElementById('search-bar');
+  const input = document.getElementById('header-search-input');
   if (!bar) return;
-  if (bar.hasAttribute('hidden')) {
-    bar.removeAttribute('hidden');
-    const input = bar.querySelector('.search-input');
-    if (input) input.focus();
-  } else {
-    bar.setAttribute('hidden', '');
-  }
+  const isOpen = bar.classList.toggle('is-open');
+  bar.setAttribute('aria-hidden', String(!isOpen));
+  if (isOpen && input) setTimeout(() => input.focus(), 60);
 }
 
-// ── Hamburger nav toggle ──────────────────────────────────
+// Close search on Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const bar = document.getElementById('search-bar');
+    if (bar && bar.classList.contains('is-open')) {
+      bar.classList.remove('is-open');
+      bar.setAttribute('aria-hidden', 'true');
+    }
+  }
+});
+
+// ── Nav toggle (hamburger) ────────────────────────────────────────────────────
 function toggleNav(btn) {
   const nav = document.getElementById('main-nav');
   if (!nav) return;
-  const open = nav.classList.toggle('is-open');
-  btn.classList.toggle('is-open', open);
-  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  const isOpen = nav.classList.toggle('is-open');
+  btn.classList.toggle('is-open', isOpen);
+  btn.setAttribute('aria-expanded', String(isOpen));
 }
 
-// ── Search page ───────────────────────────────────────────
-(function initSearchPage() {
+// Close nav when clicking outside
+document.addEventListener('click', e => {
+  const nav = document.getElementById('main-nav');
+  const btn = document.getElementById('nav-toggle');
+  if (!nav || !nav.classList.contains('is-open')) return;
+  if (!nav.contains(e.target) && (!btn || !btn.contains(e.target))) {
+    nav.classList.remove('is-open');
+    if (btn) { btn.classList.remove('is-open'); btn.setAttribute('aria-expanded', 'false'); }
+  }
+});
+
+// ── Search page: load results from search-index.json ─────────────────────────
+(async function initSearch() {
+  const input = document.getElementById('search-page-input');
   const resultsEl = document.getElementById('search-results');
-  const countEl   = document.getElementById('search-results-count');
-  const inputEl   = document.getElementById('search-page-input');
-  if (!resultsEl) return;
+  const countEl = document.getElementById('search-results-count');
+  if (!input || !resultsEl) return;
 
+  // Get query from URL
   const params = new URLSearchParams(window.location.search);
-  const query  = (params.get('q') || '').trim().toLowerCase();
+  const query = params.get('q') || '';
+  if (!query) return;
 
-  if (inputEl) inputEl.value = params.get('q') || '';
-  if (!query)  return;
+  input.value = query;
 
-  document.title = `Search: "${params.get('q')}" — The Hidden Reporter`;
+  try {
+    const res = await fetch('/search-index.json');
+    const index = await res.json();
+    const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
 
-  fetch('/search-index.json')
-    .then(r => r.json())
-    .then(articles => {
-      const results = articles.filter(a => {
-        const haystack = `${a.title} ${a.summary} ${a.category}`.toLowerCase();
-        return query.split(/\s+/).every(word => haystack.includes(word));
-      });
-
-      if (countEl) {
-        countEl.textContent = `${results.length} result${results.length !== 1 ? 's' : ''} for "${params.get('q')}"`;
-      }
-
-      if (!results.length) {
-        resultsEl.innerHTML = '<p style="color:#888;font-style:italic;">No articles found. Try a different keyword.</p>';
-        return;
-      }
-
-      resultsEl.innerHTML = results.map(a => {
-        const date = new Date(a.publish_date || a.date).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
-        const url  = a.url || `/articles/${a.category}/${a.slug}.html`;
-        return `<div class="search-result-item">
-          <h3><a href="${url}">${escapeHtml(a.title)}</a></h3>
-          <p>${escapeHtml(a.summary || '')}</p>
-          <div class="search-result-meta">
-            <a href="/category/${a.category}.html" class="article-category">${capitalize(a.category)}</a>
-            &nbsp;·&nbsp; ${date} &nbsp;·&nbsp; ${escapeHtml(a.source)}
-          </div>
-        </div>`;
-      }).join('');
-    })
-    .catch(() => {
-      if (resultsEl) resultsEl.innerHTML = '<p style="color:#888;">Search unavailable.</p>';
+    const results = index.filter(a => {
+      const text = `${a.title} ${a.summary} ${a.category}`.toLowerCase();
+      return terms.every(t => text.includes(t));
     });
+
+    if (countEl) countEl.textContent = `${results.length} result${results.length !== 1 ? 's' : ''} for "${query}"`;
+
+    if (!results.length) {
+      resultsEl.innerHTML = `<p style="color:var(--gray-500);font-family:var(--sans);padding:32px 0">No results found. Try different keywords.</p>`;
+      return;
+    }
+
+    resultsEl.innerHTML = `<div class="articles-grid">${results.slice(0, 40).map(a => `
+      <article class="article-card article-card--medium card-lift">
+        ${a.image ? `<div class="card-img-wrap"><a href="${escapeHtml(a.url)}"><img class="card-img" src="${escapeHtml(a.image)}" alt="" loading="lazy"></a></div>` : ''}
+        <div class="card-body">
+          <a href="/category/${escapeHtml(a.category)}.html" class="card-category">${capitalize(a.category)}</a>
+          <h3 class="card-title"><a href="${escapeHtml(a.url)}">${escapeHtml(a.title)}</a></h3>
+          <p class="card-summary">${escapeHtml((a.summary || '').slice(0, 140))}</p>
+          <div class="card-meta"><span>${timeAgo(new Date(a.publish_date))}</span><span class="card-meta-dot">·</span><span>${escapeHtml(a.source || '')}</span></div>
+        </div>
+      </article>`).join('')}</div>`;
+  } catch {
+    if (countEl) countEl.textContent = 'Search index unavailable. Please try again later.';
+  }
 })();
 
-// ── Popular articles widget ───────────────────────────────
-(function loadPopularArticles() {
-  const containers = document.querySelectorAll('#popular-articles');
-  if (!containers.length) return;
-
-  fetch('/search-index.json')
-    .then(r => r.json())
-    .then(articles => {
-      // The search index doesn't include view_count; show 5 most recent
-      // (Supabase view_count tracking handled server-side)
-      const recent = articles.slice(0, 5);
-      const html = recent.map((a, i) => {
-        const url = a.url || `/articles/${a.category}/${a.slug}.html`;
-        return `<div class="popular-item">
-          <span class="popular-num">${i + 1}</span>
-          <a href="${url}">${escapeHtml(a.title)}</a>
-        </div>`;
-      }).join('');
-      containers.forEach(el => { el.innerHTML = html; });
-    })
-    .catch(() => {});
+// ── Popular articles widget ───────────────────────────────────────────────────
+(async function initPopular() {
+  const container = document.getElementById('popular-articles');
+  if (!container) return;
+  try {
+    const res = await fetch('/search-index.json');
+    const index = await res.json();
+    const top5 = index.slice(0, 5);
+    container.innerHTML = top5.map((a, i) => `
+      <div class="popular-item">
+        <span class="popular-num">${String(i + 1).padStart(2, '0')}</span>
+        <div class="popular-body">
+          <a class="popular-title" href="${escapeHtml(a.url)}">${escapeHtml(a.title)}</a>
+          <div class="popular-meta">${capitalize(a.category)} · ${timeAgo(new Date(a.publish_date))}</div>
+        </div>
+      </div>`).join('');
+  } catch { /* silent */ }
 })();
 
-// ── View count ping ───────────────────────────────────────
+// ── View tracking (article pages) ─────────────────────────────────────────────
 (function trackView() {
-  const body = document.querySelector('[itemtype="https://schema.org/NewsArticle"]');
-  if (!body) return;
+  const articleId = document.querySelector('article[itemtype="https://schema.org/NewsArticle"]')
+    ?.getAttribute('data-id');
+  if (!articleId) return;
 
-  // Extract slug from URL — supports /articles/{category}/{slug}
-  const match = window.location.pathname.match(/\/articles\/[^/]+\/([^/]+?)(?:\.html)?$/);
-  if (!match) return;
-  const slug = match[1];
-
-  // Ping the Supabase increment function via a small fetch
   const supabaseUrl = document.documentElement.dataset.supabaseUrl;
   const supabaseKey = document.documentElement.dataset.supabaseKey;
   if (!supabaseUrl || !supabaseKey) return;
 
   fetch(`${supabaseUrl}/rest/v1/rpc/increment_view_count`, {
-    method:  'POST',
+    method: 'POST',
     headers: {
-      'Content-Type':  'application/json',
-      'apikey':         supabaseKey,
+      'Content-Type': 'application/json',
+      'apikey': supabaseKey,
       'Authorization': `Bearer ${supabaseKey}`,
     },
-    body: JSON.stringify({ article_slug: slug }),
-  }).catch(() => {});
+    body: JSON.stringify({ article_id: articleId }),
+  }).catch(() => { /* silent */ });
 })();
 
-// ── Helpers ───────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function escapeHtml(str) {
-  const map = { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' };
-  return (str || '').replace(/[&<>"']/g, c => map[c]);
+  return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function capitalize(str) {
+  return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+}
+function timeAgo(date) {
+  const s = Math.floor((Date.now() - date) / 1000);
+  if (s < 60) return 'Just now';
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  if (s < 604800) return `${Math.floor(s / 86400)}d ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function capitalize(s) {
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
-}
+// ── Footer year ───────────────────────────────────────────────────────────────
+const yearEl = document.getElementById('footer-year');
+if (yearEl) yearEl.textContent = new Date().getFullYear();
