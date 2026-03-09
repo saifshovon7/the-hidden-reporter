@@ -5,8 +5,16 @@
     <link>https://the-hidden-reporter.pages.dev</link>
     <description>Uncovering stories behind the headlines.</description>
     <language>en-us</language>
-    <lastBuildDate>Mon, 09 Mar 2026 12:45:33 GMT</lastBuildDate>
+    <lastBuildDate>Mon, 09 Mar 2026 12:45:44 GMT</lastBuildDate>
     <atom:link href="https://the-hidden-reporter.pages.dev/feed.xml" rel="self" type="application/rss+xml"/>
+  <item>
+    <title><![CDATA[Live Nation Accused of Concert Industry Terror]]></title>
+    <link>https://the-hidden-reporter.pages.dev/articles/technology/live-nation-accused-of-concert-industry-terror-mmj6ckw1.html</link>
+    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/live-nation-accused-of-concert-industry-terror-mmj6ckw1.html</guid>
+    <description><![CDATA[A core theme in the antitrust trial against Live Nation-Ticketmaster is retaliation, with witnesses testifying that the company withheld concerts from venues that didn't use Ticketmaster.]]></description>
+    <pubDate>Mon, 09 Mar 2026 12:39:35 GMT</pubDate>
+    <category>technology</category>
+  </item>
   <item>
     <title><![CDATA[Tributes Paid to Grime Pioneer Dot Rotten After Death at 37]]></title>
     <link>https://the-hidden-reporter.pages.dev/articles/general/tributes-paid-to-grime-pioneer-dot-rotten-after-death-at-37-mmj6c3l3.html</link>
@@ -238,14 +246,6 @@
     <description><![CDATA[The Pentagon's use of Anthropic's Claude technology has been marred by controversy, which may deter startups from defense work.]]></description>
     <pubDate>Sun, 08 Mar 2026 20:14:42 GMT</pubDate>
     <category>technology</category>
-  </item>
-  <item>
-    <title><![CDATA[Pitch Invasion by Celtic and Rangers Fans Condemned by Police]]></title>
-    <link>https://the-hidden-reporter.pages.dev/articles/general/pitch-invasion-by-celtic-and-rangers-fans-condemned-by-police-mmiwsowa.html</link>
-    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/general/pitch-invasion-by-celtic-and-rangers-fans-condemned-by-police-mmiwsowa.html</guid>
-    <description><![CDATA[Celtic and Rangers fans clashed during a pitch invasion after an Old Firm match in Glasgow, resulting in injuries and arrests.]]></description>
-    <pubDate>Sun, 08 Mar 2026 20:01:10 GMT</pubDate>
-    <category>general</category>
   </item>
   </channel>
 </rss>
