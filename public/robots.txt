@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Block automation internals
+Disallow: /search-index.json
+
+Sitemap: https://the-hidden-reporter.pages.dev/sitemap.xml

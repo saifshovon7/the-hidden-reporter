@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found — The Hidden Reporter</title>
+    <meta name="description" content="The page you were looking for could not be found.">
+    <meta name="robots" content="noindex, follow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .error-page {
+            min-height: calc(100vh - var(--header-h) - 200px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 60px var(--gap);
+        }
+
+        .error-code {
+            font-family: var(--serif);
+            font-size: clamp(5rem, 15vw, 10rem);
+            font-weight: 400;
+            color: var(--gray-200);
+            line-height: 1;
+            margin-bottom: 16px;
+            letter-spacing: -0.04em;
+        }
+
+        .error-title {
+            font-family: var(--serif);
+            font-size: clamp(1.4rem, 4vw, 2rem);
+            color: var(--black);
+            margin-bottom: 12px;
+        }
+
+        .error-desc {
+            font-family: var(--sans);
+            font-size: 0.95rem;
+            color: var(--gray-500);
+            max-width: 420px;
+            line-height: 1.7;
+            margin-bottom: 32px;
+        }
+
+        .error-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            height: 44px;
+            padding: 0 24px;
+            background: var(--black);
+            color: var(--white);
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            border-radius: var(--radius);
+            transition: opacity var(--transition);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.8;
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            height: 44px;
+            padding: 0 24px;
+            background: transparent;
+            color: var(--gray-600);
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            border-radius: var(--radius);
+            border: 1.5px solid var(--gray-200);
+            transition: border-color var(--transition), color var(--transition);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--gray-400);
+            color: var(--black);
+        }
+
+        .error-divider {
+            width: 40px;
+            height: 2px;
+            background: var(--gray-200);
+            margin: 24px auto;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ── HEADER ───────────────────────────────────────────── -->
+    <header class="site-header" id="site-header">
+        <div class="header-inner">
+            <a href="/" class="logo-link" aria-label="The Hidden Reporter">
+                <span class="logo-name">The Hidden Reporter</span>
+                <span class="logo-tagline">Uncovering stories behind the headlines.</span>
+            </a>
+            <nav class="main-nav" id="main-nav" aria-label="Main navigation">
+                <a href="/">Home</a>
+                <a href="/category/general.html">General</a>
+                <a href="/category/technology.html">Technology</a>
+                <a href="/category/business.html">Business</a>
+                <a href="/category/finance.html">Finance</a>
+                <a href="/category/science.html">Science</a>
+                <a href="/category/world.html">World</a>
+                <a href="/category/politics.html">Politics</a>
+            </nav>
+            <div class="header-actions">
+                <button class="header-btn" aria-label="Search" onclick="toggleSearch()" id="search-toggle-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                </button>
+                <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false"
+                    onclick="toggleNav(this)">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+        <div id="search-bar" class="header-search-bar" role="search" aria-hidden="true">
+            <form action="/search.html" method="get" class="search-form">
+                <input type="search" name="q" placeholder="Search articles…" class="search-input"
+                    id="header-search-input" autocomplete="off">
+                <button type="submit" class="search-btn">Search</button>
+            </form>
+        </div>
+    </header>
+
+    <!-- ── 404 CONTENT ─────────────────────────────────────── -->
+    <main class="site-main" id="main-content">
+        <div class="error-page">
+            <div class="error-code">404</div>
+            <div class="error-divider"></div>
+            <h1 class="error-title">Page Not Found</h1>
+            <p class="error-desc">
+                The story you're looking for has moved, been removed, or may never have existed.
+                Try searching for what you need, or head back to the homepage.
+            </p>
+            <div class="error-actions">
+                <a href="/" class="btn-primary">← Back to Homepage</a>
+                <a href="/search.html" class="btn-secondary">Search Articles</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- ── FOOTER ───────────────────────────────────────────── -->
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <strong>The Hidden Reporter</strong><br>
+                <em>Uncovering stories behind the headlines.</em>
+            </div>
+            <nav class="footer-nav" aria-label="Footer navigation">
+                <a href="/about.html">About</a>
+                <a href="/editorial-policy.html">Editorial Policy</a>
+                <a href="/contact.html">Contact</a>
+                <a href="/feed.xml">RSS Feed</a>
+                <a href="/sitemap.xml">Sitemap</a>
+            </nav>
+            <p class="footer-copy">&copy; <span id="footer-year"></span> The Hidden Reporter. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="/js/main.js" defer></script>
+    <script>
+        document.getElementById('footer-year').textContent = new Date().getFullYear();
+    </script>
+</body>
+
+</html>
