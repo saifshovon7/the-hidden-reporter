@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — The Hidden Reporter</title>
+  <meta name="description" content="Learn about The Hidden Reporter — an independent AI-powered news aggregation platform uncovering stories behind the headlines.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-top">
+        <div class="header-date" id="site-date"></div>
+        <div class="header-logo">
+          <a href="/" class="logo-link">
+            <span class="logo-name">The Hidden Reporter</span>
+            <span class="logo-tagline">Uncovering stories behind the headlines.</span>
+          </a>
+        </div>
+        <div class="header-search">
+          <button class="search-toggle" aria-label="Toggle search" onclick="toggleSearch()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </button>
+        </div>
+      </div>
+      <div id="search-bar" class="search-bar" hidden>
+        <form action="/search.html" method="get" class="search-form">
+          <input type="search" name="q" placeholder="Search articles…" class="search-input" autofocus>
+          <button type="submit" class="search-btn">Search</button>
+        </form>
+      </div>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="/">Home</a>
+        <a href="/category/general.html">General</a>
+        <a href="/category/technology.html">Technology</a>
+        <a href="/category/business.html">Business</a>
+        <a href="/category/science.html">Science</a>
+        <a href="/category/world.html">World</a>
+        <a href="/category/politics.html">Politics</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="site-main">
+    <article class="static-page" itemscope itemtype="https://schema.org/AboutPage">
+
+      <h1>About The Hidden Reporter</h1>
+
+      <p><strong>The Hidden Reporter</strong> is an independent, AI-powered news aggregation platform dedicated to surfacing the stories that matter — not just the ones that trend.</p>
+
+      <p>Our tagline says it all: <em>Uncovering stories behind the headlines.</em> In an era of fragmented media and algorithmic echo chambers, we believe readers deserve access to important news from across the globe, presented clearly and without bias.</p>
+
+      <h2>How It Works</h2>
+
+      <p>Our automated system continuously monitors trusted news sources from around the world — including major international wire services, regional outlets, and specialist publications. Each article is independently verified against our source database, checked for duplication, and rewritten by artificial intelligence to ensure clarity, neutrality, and journalistic quality.</p>
+
+      <p>We do not fabricate news. Every story is sourced from and linked to the original reporting. Our AI editorial process is designed to:</p>
+
+      <ul>
+        <li>Remove advertiser influence and promotional language</li>
+        <li>Preserve all factual information and direct quotes</li>
+        <li>Present information in a clear, readable format</li>
+        <li>Always credit the original source</li>
+      </ul>
+
+      <h2>Our Sources</h2>
+
+      <p>We aggregate news from a curated list of reputable international and regional sources, including wire services, public-interest broadcasters, and established digital news outlets. Our source list is reviewed regularly to maintain quality and diversity of coverage.</p>
+
+      <h2>Categories We Cover</h2>
+
+      <ul>
+        <li><a href="/category/general.html">General News</a></li>
+        <li><a href="/category/technology.html">Technology</a></li>
+        <li><a href="/category/business.html">Business &amp; Economy</a></li>
+        <li><a href="/category/science.html">Science</a></li>
+        <li><a href="/category/world.html">World Affairs</a></li>
+        <li><a href="/category/politics.html">Politics</a></li>
+      </ul>
+
+      <h2>Transparency</h2>
+
+      <p>We are committed to transparency in how we operate. Please read our <a href="/editorial-policy.html">Editorial Policy</a> for a detailed explanation of our editorial standards and AI usage.</p>
+
+      <h2>Contact</h2>
+
+      <p>Have a question, a tip, or feedback? We'd love to hear from you. Visit our <a href="/contact.html">Contact page</a> to get in touch.</p>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <strong>The Hidden Reporter</strong><br>
+        <em>Uncovering stories behind the headlines.</em>
+      </div>
+      <nav class="footer-nav">
+        <a href="/about.html">About</a>
+        <a href="/editorial-policy.html">Editorial Policy</a>
+        <a href="/contact.html">Contact</a>
+        <a href="/feed.xml">RSS Feed</a>
+        <a href="/sitemap.xml">Sitemap</a>
+      </nav>
+      <p class="footer-copy">&copy; <span id="footer-year"></span> The Hidden Reporter. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="/js/main.js" defer></script>
+  <script>
+    document.getElementById('site-date').textContent =
+      new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    document.getElementById('footer-year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

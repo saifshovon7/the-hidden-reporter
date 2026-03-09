@@ -1,0 +1,27 @@
+# Cloudflare Pages redirect rules
+
+# ── Clean article URLs (no .html extension) ──────────────────────────────────
+# /articles/category/slug  →  /articles/category/slug.html
+/articles/:category/:slug   /articles/:category/:slug.html   200
+
+# ── Category pages (no .html extension) ──────────────────────────────────────
+/category/:cat   /category/:cat.html   200
+
+# ── Topic pages ───────────────────────────────────────────────────────────────
+/topic/:t        /topic/:t.html        200
+
+# ── Static page aliases ───────────────────────────────────────────────────────
+/search          /search.html          200
+/about           /about.html           200
+/contact         /contact.html         200
+/editorial       /editorial-policy.html 200
+
+# ── Legacy redirects for old /article/ paths ─────────────────────────────────
+# Old articles under /article/{slug}.html have been moved.
+# Redirect to homepage so old bookmarks don't 404.
+/article/*       /   301
+
+# ── Trailing slashes ──────────────────────────────────────────────────────────
+/home            /   301
+/articles/       /   301
+/category/       /   301
