@@ -5,7 +5,7 @@
     <link>https://the-hidden-reporter.pages.dev</link>
     <description>Uncovering stories behind the headlines.</description>
     <language>en-us</language>
-    <lastBuildDate>Mon, 09 Mar 2026 08:26:13 GMT</lastBuildDate>
+    <lastBuildDate>Mon, 09 Mar 2026 08:26:27 GMT</lastBuildDate>
     <atom:link href="https://the-hidden-reporter.pages.dev/feed.xml" rel="self" type="application/rss+xml"/>
   <item>
     <title><![CDATA[G7 Nations to Hold Emergency Meeting on Oil Amid Stock Market Slump]]></title>
@@ -184,6 +184,14 @@
     <category>technology</category>
   </item>
   <item>
+    <title><![CDATA[Rivian's Ambitious R2 Launch Plan Unveiled]]></title>
+    <link>https://the-hidden-reporter.pages.dev/articles/technology/rivians-ambitious-r2-launch-plan-unveiled-mmix32x7</link>
+    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/rivians-ambitious-r2-launch-plan-unveiled-mmix32x7</guid>
+    <description><![CDATA[Rivian is set to launch its R2 SUV, aiming to sell between 20,000 and 25,000 units in 2026. The company has six months to reach its goal, requiring a strategic approach to marketing and sales.]]></description>
+    <pubDate>Sun, 08 Mar 2026 16:03:00 GMT</pubDate>
+    <category>technology</category>
+  </item>
+  <item>
     <title><![CDATA[Mapped: US-Israeli Strikes Across Iran and the Middle East]]></title>
     <link>https://the-hidden-reporter.pages.dev/articles/general/mapped-us-israeli-strikes-across-iran-and-the-middle-east-mmiwlqt1</link>
     <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/general/mapped-us-israeli-strikes-across-iran-and-the-middle-east-mmiwlqt1</guid>
@@ -237,14 +245,6 @@
     <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/google-sued-over-ai-products-role-in-sons-death-mmiwwcfb</guid>
     <description><![CDATA[A Florida man's father is suing Google over the tech giant's AI product, Gemini, which he claims fueled his son's delusional spiral leading to his death. The lawsuit alleges Google's design choices prioritized engagement over user safety.]]></description>
     <pubDate>Wed, 04 Mar 2026 18:55:45 GMT</pubDate>
-    <category>technology</category>
-  </item>
-  <item>
-    <title><![CDATA[ICO Writes to Meta Over Concerns with AI Smart Glasses Report]]></title>
-    <link>https://the-hidden-reporter.pages.dev/articles/technology/ico-writes-to-meta-over-concerns-with-ai-smart-glasses-report-mmiwwjyj</link>
-    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/ico-writes-to-meta-over-concerns-with-ai-smart-glasses-report-mmiwwjyj</guid>
-    <description><![CDATA[The UK's data watchdog, the ICO, has written to Meta over concerns that outsourced workers were able to view sensitive content filmed by the company's AI smart glasses.]]></description>
-    <pubDate>Wed, 04 Mar 2026 16:23:17 GMT</pubDate>
     <category>technology</category>
   </item>
   </channel>
