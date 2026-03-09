@@ -60,7 +60,7 @@ function toggleNav(btn) {
 
       resultsEl.innerHTML = results.map(a => {
         const date = new Date(a.publish_date || a.date).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
-        const url  = a.url || `/articles/${a.category}/${a.slug}`;
+        const url  = a.url || `/articles/${a.category}/${a.slug}.html`;
         return `<div class="search-result-item">
           <h3><a href="${url}">${escapeHtml(a.title)}</a></h3>
           <p>${escapeHtml(a.summary || '')}</p>
@@ -88,7 +88,7 @@ function toggleNav(btn) {
       // (Supabase view_count tracking handled server-side)
       const recent = articles.slice(0, 5);
       const html = recent.map((a, i) => {
-        const url = a.url || `/articles/${a.category}/${a.slug}`;
+        const url = a.url || `/articles/${a.category}/${a.slug}.html`;
         return `<div class="popular-item">
           <span class="popular-num">${i + 1}</span>
           <a href="${url}">${escapeHtml(a.title)}</a>
