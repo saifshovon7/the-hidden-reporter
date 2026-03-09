@@ -8,14 +8,22 @@
 function toggleSearch() {
   const bar = document.getElementById('search-bar');
   if (!bar) return;
-  const hidden = bar.hasAttribute('hidden');
-  if (hidden) {
+  if (bar.hasAttribute('hidden')) {
     bar.removeAttribute('hidden');
     const input = bar.querySelector('.search-input');
     if (input) input.focus();
   } else {
     bar.setAttribute('hidden', '');
   }
+}
+
+// ── Hamburger nav toggle ──────────────────────────────────
+function toggleNav(btn) {
+  const nav = document.getElementById('main-nav');
+  if (!nav) return;
+  const open = nav.classList.toggle('is-open');
+  btn.classList.toggle('is-open', open);
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
 }
 
 // ── Search page ───────────────────────────────────────────
@@ -51,9 +59,10 @@ function toggleSearch() {
       }
 
       resultsEl.innerHTML = results.map(a => {
-        const date = new Date(a.date).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+        const date = new Date(a.publish_date || a.date).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+        const url  = a.url || `/articles/${a.category}/${a.slug}`;
         return `<div class="search-result-item">
-          <h3><a href="/article/${a.slug}.html">${escapeHtml(a.title)}</a></h3>
+          <h3><a href="${url}">${escapeHtml(a.title)}</a></h3>
           <p>${escapeHtml(a.summary || '')}</p>
           <div class="search-result-meta">
             <a href="/category/${a.category}.html" class="article-category">${capitalize(a.category)}</a>
@@ -78,12 +87,13 @@ function toggleSearch() {
       // The search index doesn't include view_count; show 5 most recent
       // (Supabase view_count tracking handled server-side)
       const recent = articles.slice(0, 5);
-      const html = recent.map((a, i) =>
-        `<div class="popular-item">
+      const html = recent.map((a, i) => {
+        const url = a.url || `/articles/${a.category}/${a.slug}`;
+        return `<div class="popular-item">
           <span class="popular-num">${i + 1}</span>
-          <a href="/article/${a.slug}.html">${escapeHtml(a.title)}</a>
-        </div>`
-      ).join('');
+          <a href="${url}">${escapeHtml(a.title)}</a>
+        </div>`;
+      }).join('');
       containers.forEach(el => { el.innerHTML = html; });
     })
     .catch(() => {});
@@ -94,8 +104,8 @@ function toggleSearch() {
   const body = document.querySelector('[itemtype="https://schema.org/NewsArticle"]');
   if (!body) return;
 
-  // Extract slug from URL
-  const match = window.location.pathname.match(/\/article\/([^/]+)\.html$/);
+  // Extract slug from URL — supports /articles/{category}/{slug}
+  const match = window.location.pathname.match(/\/articles\/[^/]+\/([^/]+?)(?:\.html)?$/);
   if (!match) return;
   const slug = match[1];
 
