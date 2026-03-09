@@ -102,7 +102,7 @@ function baseHtml({ title, meta, schema, og, body, activeCat = '', footerAd = ''
 }
 
 function articlePath(category, slug) {
-  return `/articles/${category || 'general'}/${slug}`;
+  return `/articles/${category || 'general'}/${slug}.html`;
 }
 
 // ── Article page ──────────────────────────────────────────────────────────────
