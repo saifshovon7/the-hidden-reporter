@@ -4,35 +4,36 @@ require('dotenv').config();
 const config = {
   // ── Site ──────────────────────────────────────────────────
   site: {
-    name:    process.env.SITE_NAME || 'The Hidden Reporter',
+    name: process.env.SITE_NAME || 'The Hidden Reporter',
     tagline: 'Uncovering stories behind the headlines.',
-    url:     process.env.SITE_URL  || 'https://thehiddenreporter.pages.dev',
+    url: process.env.SITE_URL || 'https://thehiddenreporter.pages.dev',
   },
 
   // ── Supabase ──────────────────────────────────────────────
   supabase: {
-    url:        process.env.SUPABASE_URL        || '',
+    url: process.env.SUPABASE_URL || '',
     serviceKey: process.env.SUPABASE_SERVICE_KEY || '',
+    anonKey: process.env.SUPABASE_ANON_KEY || '',
   },
 
   // ── AI ────────────────────────────────────────────────────
   ai: {
-    apiKey:  process.env.AI_API_KEY  || '',
-    model:   process.env.AI_MODEL    || 'gpt-4o-mini',
+    apiKey: process.env.AI_API_KEY || '',
+    model: process.env.AI_MODEL || 'gpt-4o-mini',
     baseUrl: process.env.AI_BASE_URL || 'https://api.openai.com/v1',
   },
 
   // ── GitHub ────────────────────────────────────────────────
   github: {
-    token:  process.env.GITHUB_TOKEN  || '',
-    owner:  process.env.GITHUB_OWNER  || '',
-    repo:   process.env.GITHUB_REPO   || 'the-hidden-reporter',
+    token: process.env.GITHUB_TOKEN || '',
+    owner: process.env.GITHUB_OWNER || '',
+    repo: process.env.GITHUB_REPO || 'the-hidden-reporter',
     branch: process.env.GITHUB_BRANCH || 'main',
   },
 
   // ── Optional APIs ─────────────────────────────────────────
   newsApi: {
-    key:     process.env.NEWS_API_KEY || '',
+    key: process.env.NEWS_API_KEY || '',
     enabled: Boolean(process.env.NEWS_API_KEY),
   },
   gdelt: {
@@ -41,9 +42,9 @@ const config = {
 
   // ── Publishing ────────────────────────────────────────────
   publishing: {
-    maxPerDay:             parseInt(process.env.MAX_ARTICLES_PER_DAY || '30', 10),
-    fetchIntervalMinutes:  parseInt(process.env.FETCH_INTERVAL_MINUTES || '45', 10),
-    cleanupMonths:         24,
+    maxPerDay: parseInt(process.env.MAX_ARTICLES_PER_DAY || '30', 10),
+    fetchIntervalMinutes: parseInt(process.env.FETCH_INTERVAL_MINUTES || '45', 10),
+    cleanupMonths: 24,
   },
 
   // ── Categories ────────────────────────────────────────────
@@ -100,11 +101,11 @@ Original content: ${content.slice(0, 3000)}`,
 // Validate required config
 function validate() {
   const required = [
-    ['supabase.url',        config.supabase.url],
+    ['supabase.url', config.supabase.url],
     ['supabase.serviceKey', config.supabase.serviceKey],
-    ['ai.apiKey',           config.ai.apiKey],
-    ['github.token',        config.github.token],
-    ['github.owner',        config.github.owner],
+    ['ai.apiKey', config.ai.apiKey],
+    ['github.token', config.github.token],
+    ['github.owner', config.github.owner],
   ];
   const missing = required.filter(([, v]) => !v).map(([k]) => k);
   if (missing.length) {
