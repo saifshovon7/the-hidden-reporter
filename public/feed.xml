@@ -5,8 +5,16 @@
     <link>https://the-hidden-reporter.pages.dev</link>
     <description>Uncovering stories behind the headlines.</description>
     <language>en-us</language>
-    <lastBuildDate>Mon, 09 Mar 2026 14:15:00 GMT</lastBuildDate>
+    <lastBuildDate>Mon, 09 Mar 2026 14:15:07 GMT</lastBuildDate>
     <atom:link href="https://the-hidden-reporter.pages.dev/feed.xml" rel="self" type="application/rss+xml"/>
+  <item>
+    <title><![CDATA[Zoox Expands Robotaxi Testing to Dallas and Phoenix]]></title>
+    <link>https://the-hidden-reporter.pages.dev/articles/technology/zoox-expands-robotaxi-testing-to-dallas-and-phoenix-mmj9jiyd.html</link>
+    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/zoox-expands-robotaxi-testing-to-dallas-and-phoenix-mmj9jiyd.html</guid>
+    <description><![CDATA[Zoox has begun mapping the streets of Dallas and Phoenix as part of its expansion into autonomous vehicle testing, with plans to start testing its self-driving system in the cities soon.]]></description>
+    <pubDate>Mon, 09 Mar 2026 14:14:34 GMT</pubDate>
+    <category>technology</category>
+  </item>
   <item>
     <title><![CDATA[Hasbro CEO Chris Cocks Discusses AI, KPop Demon Hunters, and the Future of Harry Potter]]></title>
     <link>https://the-hidden-reporter.pages.dev/articles/technology/hasbro-ceo-chris-cocks-discusses-ai-kpop-demon-hunters-and-the-future-of-harry-p-mmj98l09.html</link>
@@ -238,14 +246,6 @@
     <description><![CDATA[Iranians describe the strikes on oil depots as 'night turned into day' as the US-Israeli attack on the country continues. The strikes have killed at least 1,332 Iranian civilians and wounded thousands.]]></description>
     <pubDate>Mon, 09 Mar 2026 05:40:05 GMT</pubDate>
     <category>general</category>
-  </item>
-  <item>
-    <title><![CDATA[Ring CEO Tries to Alleviate Privacy Fears, but Answers Raise More Questions]]></title>
-    <link>https://the-hidden-reporter.pages.dev/articles/technology/ring-ceo-tries-to-alleviate-privacy-fears-but-answers-raise-more-questions-mmix21ou.html</link>
-    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/ring-ceo-tries-to-alleviate-privacy-fears-but-answers-raise-more-questions-mmix21ou.html</guid>
-    <description><![CDATA[Ring CEO Jamie Siminoff attempts to calm concerns about privacy, but his explanations raise more questions about the company's intentions.]]></description>
-    <pubDate>Mon, 09 Mar 2026 04:35:06 GMT</pubDate>
-    <category>technology</category>
   </item>
   </channel>
 </rss>
