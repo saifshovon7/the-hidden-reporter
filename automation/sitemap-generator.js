@@ -66,7 +66,7 @@ async function generateSitemap() {
   const articleEntries = (articles || []).map(a => {
     const date = new Date(a.updated_at || a.publish_date).toISOString().split('T')[0];
     const cat  = a.category || 'general';
-    return urlEntry(`${SITE_URL}/articles/${cat}/${a.slug}`, date, 'never', '0.7');
+    return urlEntry(`${SITE_URL}/articles/${cat}/${a.slug}.html`, date, 'never', '0.7');
   });
 
   const allEntries = [
