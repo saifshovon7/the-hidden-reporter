@@ -14,16 +14,16 @@
 require('dotenv').config();
 
 const cron = require('node-cron');
-const { config, validate }    = require('./config');
+const { config, validate } = require('./config');
 const { fetchAllSources, markProcessed } = require('./fetcher');
-const { extractArticle }      = require('./extractor');
-const { rewriteArticle }      = require('./ai-rewriter');
-const { isDuplicate }         = require('./duplicate-detector');
+const { extractArticle } = require('./extractor');
+const { rewriteArticle } = require('./ai-rewriter');
+const { isDuplicate } = require('./duplicate-detector');
 const { publishArticle, getTodayCount, rebuildAll } = require('./publisher');
-const { updateTrending }      = require('./trending-detector');
-const { runCleanup }          = require('./cleanup');
-const { generateSitemap }     = require('./sitemap-generator');
-const { pushFile }            = require('./github-pusher');
+const { updateTrending } = require('./trending-detector');
+const { runCleanup } = require('./cleanup');
+const { generateSitemap } = require('./sitemap-generator');
+const { pushFile } = require('./github-pusher');
 
 // ── Validate config on startup ────────────────────────────────────────────────
 validate();
@@ -53,7 +53,9 @@ async function runPipeline() {
     }
 
     const remaining = config.publishing.maxPerDay - todayCount;
+    const delayMs = config.publishing.postPublishDelayMinutes * 60 * 1000;
     console.log(`[Pipeline] ${remaining} publish slots remaining today.`);
+    console.log(`[Pipeline] Post-publish delay: ${config.publishing.postPublishDelayMinutes} minutes between articles.`);
 
     // 1. Fetch all sources
     const fetchedItems = await fetchAllSources();
@@ -62,17 +64,24 @@ async function runPipeline() {
       return;
     }
 
+    // Limit to remaining daily slots
+    const itemsToProcess = fetchedItems.slice(0, remaining);
     let published = 0;
     const processedUrls = [];
 
-    // 2. Process each item
-    for (const item of fetchedItems) {
-      if (published >= remaining) {
-        console.log(`[Pipeline] Reached today's limit during this run.`);
+    // 2. Process ONE article at a time — sequential, never parallel
+    for (let i = 0; i < itemsToProcess.length; i++) {
+      const item = itemsToProcess[i];
+
+      // Re-check daily limit on each iteration (another process may have run)
+      const currentCount = await getTodayCount();
+      if (currentCount >= config.publishing.maxPerDay) {
+        console.log(`[Pipeline] Daily limit reached mid-run (${currentCount}/${config.publishing.maxPerDay}). Stopping.`);
         break;
       }
 
-      console.log(`\n[Pipeline] Processing: ${item.url}`);
+      console.log(`\n[Pipeline] ── Article ${i + 1}/${itemsToProcess.length} ──`);
+      console.log(`[Pipeline] Processing: ${item.url}`);
 
       try {
         // 2a. Extract content
@@ -90,21 +99,28 @@ async function runPipeline() {
         console.log(`[Pipeline] Rewriting: "${extracted.title.slice(0, 60)}…"`);
         const rewritten = await rewriteArticle(extracted.title, extracted.content);
 
-        // 2d. Publish
+        // 2d. Publish (save to DB + generate HTML + push to GitHub)
         const savedArticle = await publishArticle(extracted, rewritten);
         if (savedArticle) {
           published++;
-          console.log(`[Pipeline] ✓ Published (${published}/${remaining}): "${savedArticle.title.slice(0, 60)}"`);
+          console.log(`[Pipeline] ✓ Published (${published} today): "${savedArticle.title.slice(0, 60)}"`);
         }
 
         processedUrls.push(item.url);
 
-        // Throttle: wait 3 seconds between articles to respect rate limits
-        await sleep(3000);
+        // 2e. Wait AFTER the GitHub push completes — prevents deployment queue flooding.
+        //     Skip the delay after the last article.
+        const isLast = (i === itemsToProcess.length - 1);
+        const willHitLimit = (currentCount + published) >= config.publishing.maxPerDay;
+
+        if (!isLast && !willHitLimit) {
+          console.log(`[Pipeline] Waiting ${config.publishing.postPublishDelayMinutes} min before next article…`);
+          await sleep(delayMs);
+        }
 
       } catch (err) {
         console.error(`[Pipeline] Error processing ${item.url}: ${err.message}`);
-        processedUrls.push(item.url); // Mark as processed even on error to avoid retry loops
+        processedUrls.push(item.url); // Mark as processed to avoid retry loops
       }
     }
 
@@ -142,15 +158,15 @@ async function runDailyMaintenance() {
 // ── Scheduler ─────────────────────────────────────────────────────────────────
 function startScheduler() {
   const intervalMin = config.publishing.fetchIntervalMinutes;
-  const cronExpr    = `*/${intervalMin} * * * *`;
+  const cronExpr = `*/${intervalMin} * * * *`;
 
   console.log(`[Scheduler] Starting automation engine.`);
   console.log(`[Scheduler] Fetch interval: every ${intervalMin} minutes.`);
   console.log(`[Scheduler] Daily limit: ${config.publishing.maxPerDay} articles.`);
+  console.log(`[Scheduler] Post-publish delay: ${config.publishing.postPublishDelayMinutes} minutes.`);
   console.log(`[Scheduler] Site: ${config.site.url}`);
 
   // Rebuild search index + category pages from existing DB articles on every startup
-  // This ensures the site is never empty after a Railway restart or redeploy.
   rebuildAll().then(() => runPipeline());
 
   // Schedule recurring runs
@@ -170,7 +186,6 @@ function sleep(ms) {
 
 // ── Entry point ───────────────────────────────────────────────────────────────
 if (process.argv.includes('--once')) {
-  // Single run mode (for testing)
   runPipeline().then(() => {
     console.log('[Pipeline] --once mode: exiting.');
     process.exit(0);
