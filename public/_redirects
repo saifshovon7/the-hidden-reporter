@@ -1,3 +1,0 @@
-# Minimal redirects — avoid any rules that could match /articles/* paths
-# Only redirect old /article/ (singular) legacy URLs to homepage
-/article/*    /    301
