@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Editorial Policy — The Hidden Reporter</title>
-  <meta name="description" content="The Hidden Reporter editorial policy — our standards, AI usage disclosure, and commitment to factual, independent journalism.">
+  <meta name="description"
+    content="The Hidden Reporter editorial policy — our standards, AI usage disclosure, and commitment to factual, independent journalism.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
 </head>
+
 <body>
 
   <header class="site-header">
@@ -24,7 +27,14 @@
         </div>
         <div class="header-search">
           <button class="search-toggle" aria-label="Toggle search" onclick="toggleSearch()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </button>
+          <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" onclick="toggleNav(this)">
+            <span></span><span></span><span></span>
           </button>
         </div>
       </div>
@@ -34,7 +44,7 @@
           <button type="submit" class="search-btn">Search</button>
         </form>
       </div>
-      <nav class="main-nav" aria-label="Main navigation">
+      <nav class="main-nav" id="main-nav" aria-label="Main navigation">
         <a href="/">Home</a>
         <a href="/category/general.html">General</a>
         <a href="/category/technology.html">Technology</a>
@@ -53,7 +63,8 @@
 
       <p><em>Last updated: March 2026</em></p>
 
-      <p>The Hidden Reporter is committed to delivering accurate, fair, and independent news aggregation. This editorial policy outlines the principles, processes, and standards we uphold in all our published content.</p>
+      <p>The Hidden Reporter is committed to delivering accurate, fair, and independent news aggregation. This editorial
+        policy outlines the principles, processes, and standards we uphold in all our published content.</p>
 
       <h2>1. Source Selection</h2>
 
@@ -64,18 +75,21 @@
         <li>Identifiable editorial team or byline attribution</li>
         <li>No history of systematic misinformation</li>
       </ul>
-      <p>Our source list is reviewed quarterly and updated as needed. Sources may be removed if they demonstrate a pattern of inaccurate or misleading reporting.</p>
+      <p>Our source list is reviewed quarterly and updated as needed. Sources may be removed if they demonstrate a
+        pattern of inaccurate or misleading reporting.</p>
 
       <h2>2. AI Disclosure</h2>
 
-      <p>The Hidden Reporter uses artificial intelligence to assist in the editorial process. Specifically, AI is used to:</p>
+      <p>The Hidden Reporter uses artificial intelligence to assist in the editorial process. Specifically, AI is used
+        to:</p>
       <ul>
         <li>Rewrite and condense original articles for clarity and neutrality</li>
         <li>Generate SEO metadata (titles, descriptions, tags)</li>
         <li>Detect duplicate or highly similar content</li>
         <li>Identify trending topics across multiple sources</li>
       </ul>
-      <p>AI is <strong>not</strong> used to fabricate facts, manufacture quotes, or create original news. Every published article links to and credits the original source.</p>
+      <p>AI is <strong>not</strong> used to fabricate facts, manufacture quotes, or create original news. Every
+        published article links to and credits the original source.</p>
 
       <h2>3. Accuracy and Corrections</h2>
 
@@ -89,7 +103,8 @@
 
       <h2>4. Fairness and Balance</h2>
 
-      <p>We do not take editorial positions on political, religious, or social matters. Our AI rewriting process is explicitly instructed to:</p>
+      <p>We do not take editorial positions on political, religious, or social matters. Our AI rewriting process is
+        explicitly instructed to:</p>
       <ul>
         <li>Remove promotional or advertorial language</li>
         <li>Preserve multiple perspectives where present in the source material</li>
@@ -104,15 +119,18 @@
         <li>A direct link to the original article</li>
         <li>Image credit where applicable</li>
       </ul>
-      <p>We respect copyright. If you are a rights holder and believe content has been used inappropriately, please <a href="/contact.html">contact us</a> and we will respond within 48 hours.</p>
+      <p>We respect copyright. If you are a rights holder and believe content has been used inappropriately, please <a
+          href="/contact.html">contact us</a> and we will respond within 48 hours.</p>
 
       <h2>6. Advertising</h2>
 
-      <p>The Hidden Reporter displays advertising to sustain its operations. All advertising is clearly labelled. Advertising relationships do not influence our editorial decisions, source selection, or content.</p>
+      <p>The Hidden Reporter displays advertising to sustain its operations. All advertising is clearly labelled.
+        Advertising relationships do not influence our editorial decisions, source selection, or content.</p>
 
       <h2>7. Privacy</h2>
 
-      <p>We collect minimal data about our readers. We do not sell personal data to third parties. For full details, please refer to our Privacy Policy.</p>
+      <p>We collect minimal data about our readers. We do not sell personal data to third parties. For full details,
+        please refer to our Privacy Policy.</p>
 
       <h2>8. Contact</h2>
 
@@ -141,8 +159,9 @@
   <script src="/js/main.js" defer></script>
   <script>
     document.getElementById('site-date').textContent =
-      new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+      new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     document.getElementById('footer-year').textContent = new Date().getFullYear();
   </script>
 </body>
+
 </html>
