@@ -282,27 +282,101 @@ async function publishArticle(extractedData, rewrittenData) {
   return savedArticle;
 }
 
+// ── Republish all existing articles to new /articles/{category}/ structure ────
+async function rebuildArticleFiles() {
+  console.log('[Publisher] Rebuilding article HTML files to new URL structure...');
+
+  const { data: articles, error } = await supabase
+    .from('articles')
+    .select('*')
+    .order('publish_date', { ascending: false })
+    .limit(500);
+
+  if (error) throw new Error(`[Publisher] rebuildArticleFiles DB error: ${error.message}`);
+  if (!articles?.length) {
+    console.log('[Publisher] No articles found to rebuild.');
+    return [];
+  }
+
+  const ads = await getAds();
+  const files = [];
+
+  for (const article of articles) {
+    try {
+      const related = await getRelatedArticles(
+        article.tags, article.category, article.slug
+      );
+      const seo = generateSeoMetadata({
+        title:            article.title,
+        content:          article.content || '',
+        tags:             article.tags    || [],
+        category:         article.category,
+        publishDate:      new Date(article.publish_date),
+        summary:          article.summary,
+        seoTitle:         article.seo_title,
+        metaDescription:  article.meta_description,
+        featuredImageUrl: article.featured_image_url,
+        author:           article.author,
+      });
+      const html = generateArticlePage(
+        { ...article, og_tags: seo.ogTags },
+        related,
+        ads.sidebar,
+        ads['in-article'],
+        ads.footer
+      );
+      const cat = article.category || 'general';
+      files.push({
+        path:    `public/articles/${cat}/${article.slug}.html`,
+        content: html,
+      });
+    } catch (err) {
+      console.error(`[Publisher] Skipping article ${article.slug}: ${err.message}`);
+    }
+  }
+
+  console.log(`[Publisher] Rebuilding ${files.length} article files...`);
+
+  // Push in batches of 20 to avoid GitHub API rate limits
+  const BATCH = 20;
+  for (let i = 0; i < files.length; i += BATCH) {
+    const batch = files.slice(i, i + BATCH);
+    await pushFiles(batch, `chore: rebuild article files batch ${Math.floor(i / BATCH) + 1}`);
+    console.log(`[Publisher] Pushed batch ${Math.floor(i / BATCH) + 1}/${Math.ceil(files.length / BATCH)}`);
+    // Brief pause between batches to respect GitHub rate limits
+    if (i + BATCH < files.length) await new Promise(r => setTimeout(r, 2000));
+  }
+
+  return files;
+}
+
 // ── Startup rebuild ───────────────────────────────────────────────────────────
-// Runs once on service start. Pushes search-index.json + category pages + RSS
-// from ALL existing Supabase articles so the site is never empty after a restart.
+// Runs once on service start. Pushes all article HTML files, search-index.json,
+// category pages, and RSS feed from ALL existing Supabase articles.
 async function rebuildAll() {
   console.log('[Publisher] Running startup rebuild...');
   try {
     const ads = await getAds();
+
+    // Rebuild search index, RSS, and category pages in parallel
     const [searchIndex, rssFeed] = await Promise.all([
       buildSearchIndex(),
       buildRssFeed(),
     ]);
     const categoryFiles = await buildCategoryPages(ads);
 
-    const filesToPush = [
+    const staticFiles = [
       { path: 'public/search-index.json', content: searchIndex },
       { path: 'public/feed.xml',          content: rssFeed     },
       ...categoryFiles,
     ];
+    await pushFiles(staticFiles, 'chore: startup rebuild of index and category pages');
+    console.log(`[Publisher] Static files pushed (${staticFiles.length} files).`);
 
-    await pushFiles(filesToPush, 'chore: startup rebuild of index and category pages');
-    console.log(`[Publisher] Startup rebuild complete. Pushed ${filesToPush.length} files.`);
+    // Rebuild all article HTML files to new /articles/{category}/ structure
+    await rebuildArticleFiles();
+
+    console.log('[Publisher] Startup rebuild complete.');
   } catch (err) {
     console.error('[Publisher] Startup rebuild error:', err.message);
   }
