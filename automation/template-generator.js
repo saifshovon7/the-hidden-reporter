@@ -5,10 +5,10 @@
  * search index, RSS feed, and sitemap.
  */
 
-const { config }    = require('./config');
+const { config } = require('./config');
 const { escapeAttr } = require('./seo-generator');
 
-const SITE_URL  = config.site.url;
+const SITE_URL = config.site.url;
 const SITE_NAME = config.site.name;
 
 // ── Shared header partial ─────────────────────────────────────────────────────
@@ -75,7 +75,7 @@ function footerPartial(footerAdHtml = '') {
 // ── Base HTML wrapper ─────────────────────────────────────────────────────────
 function baseHtml({ title, meta, schema, og, body, activeCat = '', footerAd = '', canonicalPath = '/' }) {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-supabase-url="${config.supabase.url}" data-supabase-key="${config.supabase.anonKey}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -107,9 +107,9 @@ function articlePath(category, slug) {
 
 // ── Article page ──────────────────────────────────────────────────────────────
 function generateArticlePage(article, related = [], sidebarAd = '', inArticleAd = '', footerAd = '') {
-  const publishedStr  = formatDisplayDate(new Date(article.publish_date));
-  const relatedHtml   = related.length ? generateRelatedArticles(related) : '';
-  const imageHtml     = article.featured_image_url
+  const publishedStr = formatDisplayDate(new Date(article.publish_date));
+  const relatedHtml = related.length ? generateRelatedArticles(related) : '';
+  const imageHtml = article.featured_image_url
     ? `<figure class="article-hero">
         <img src="${escapeAttr(article.featured_image_url)}" alt="${escapeAttr(article.title)}" loading="lazy">
         <figcaption>Image credit: ${escapeHtml(article.featured_image_credit || article.source_name)}</figcaption>
@@ -121,10 +121,10 @@ function generateArticlePage(article, related = [], sidebarAd = '', inArticleAd 
   ).join(' ');
 
   // Split content at midpoint to insert in-article ad
-  const mid     = Math.floor(article.content.length / 2);
-  const pBreak  = article.content.lastIndexOf('</p>', mid);
-  const part1   = article.content.slice(0, pBreak + 4);
-  const part2   = article.content.slice(pBreak + 4);
+  const mid = Math.floor(article.content.length / 2);
+  const pBreak = article.content.lastIndexOf('</p>', mid);
+  const part1 = article.content.slice(0, pBreak + 4);
+  const part2 = article.content.slice(pBreak + 4);
   const adBreak = inArticleAd ? `<aside class="in-article-ad" aria-label="Advertisement">${inArticleAd}</aside>` : '';
 
   const body = `
@@ -165,12 +165,12 @@ function generateArticlePage(article, related = [], sidebarAd = '', inArticleAd 
   <meta name="robots" content="index, follow">`;
 
   return baseHtml({
-    title:         article.seo_title || article.title,
-    meta:          metaTags,
-    schema:        article.schema_markup,
-    og:            article.og_tags || '',
+    title: article.seo_title || article.title,
+    meta: metaTags,
+    schema: article.schema_markup,
+    og: article.og_tags || '',
     body,
-    activeCat:     article.category,
+    activeCat: article.category,
     footerAd,
     canonicalPath: articlePath(article.category, article.slug),
   });
@@ -181,8 +181,8 @@ function generateRelatedArticles(articles) {
   const items = articles.slice(0, 4).map(a => `
     <article class="related-card">
       ${a.featured_image_url
-        ? `<a href="${articlePath(a.category, a.slug)}"><img src="${escapeAttr(a.featured_image_url)}" alt="${escapeAttr(a.title)}" loading="lazy"></a>`
-        : ''}
+      ? `<a href="${articlePath(a.category, a.slug)}"><img src="${escapeAttr(a.featured_image_url)}" alt="${escapeAttr(a.title)}" loading="lazy"></a>`
+      : ''}
       <div class="related-card-body">
         <a href="/category/${a.category}.html" class="article-category">${capitalize(a.category)}</a>
         <h4><a href="${articlePath(a.category, a.slug)}">${escapeHtml(a.title)}</a></h4>
@@ -220,10 +220,10 @@ function generateCategoryPage(category, articles, sidebarAd = '', footerAd = '')
   </div>`;
 
   return baseHtml({
-    title:         `${displayName} News — ${SITE_NAME}`,
-    meta:          `<meta name="description" content="Latest ${displayName} news and analysis from ${SITE_NAME}.">`,
+    title: `${displayName} News — ${SITE_NAME}`,
+    meta: `<meta name="description" content="Latest ${displayName} news and analysis from ${SITE_NAME}.">`,
     body,
-    activeCat:     category,
+    activeCat: category,
     footerAd,
     canonicalPath: `/category/${category}.html`,
   });
@@ -246,8 +246,8 @@ function generateTopicPage(topic, articles, footerAd = '') {
   </div>`;
 
   return baseHtml({
-    title:         `${displayName} — ${SITE_NAME}`,
-    meta:          `<meta name="description" content="Latest news and analysis about ${displayName} from ${SITE_NAME}.">`,
+    title: `${displayName} — ${SITE_NAME}`,
+    meta: `<meta name="description" content="Latest news and analysis about ${displayName} from ${SITE_NAME}.">`,
     body,
     footerAd,
     canonicalPath: `/topic/${encodeURIComponent(topic)}.html`,
@@ -256,7 +256,7 @@ function generateTopicPage(topic, articles, footerAd = '') {
 
 // ── Article card ──────────────────────────────────────────────────────────────
 function generateArticleCard(article, size = 'small') {
-  const href   = articlePath(article.category, article.slug);
+  const href = articlePath(article.category, article.slug);
   const hLevel = size === 'large' ? '2' : size === 'medium' ? '3' : '4';
   const imgHtml = article.featured_image_url
     ? `<a href="${href}" class="card-image-link">
@@ -286,8 +286,8 @@ function generateHomepage(data) {
 
   // Featured section: 1 large + 4 small
   const [heroArticle, ...sideArticles] = featured || [];
-  const heroHtml  = heroArticle ? generateArticleCard(heroArticle, 'large') : '';
-  const sideHtml  = (sideArticles || []).slice(0, 4).map(a => generateArticleCard(a, 'small')).join('\n');
+  const heroHtml = heroArticle ? generateArticleCard(heroArticle, 'large') : '';
+  const sideHtml = (sideArticles || []).slice(0, 4).map(a => generateArticleCard(a, 'small')).join('\n');
 
   // Trending topics bar
   const trendingHtml = (trending || []).slice(0, 5).map(t =>
@@ -365,8 +365,8 @@ function generateHomepage(data) {
   </div>`;
 
   return baseHtml({
-    title:         `${SITE_NAME} — Uncovering stories behind the headlines.`,
-    meta:          `<meta name="description" content="The Hidden Reporter — Independent news aggregation. Uncovering stories behind the headlines.">`,
+    title: `${SITE_NAME} — Uncovering stories behind the headlines.`,
+    meta: `<meta name="description" content="The Hidden Reporter — Independent news aggregation. Uncovering stories behind the headlines.">`,
     body,
     footerAd,
     canonicalPath: '/',
@@ -377,14 +377,14 @@ function generateHomepage(data) {
 function generateSearchIndex(articles) {
   return JSON.stringify(
     articles.map(a => ({
-      title:        a.title,
-      slug:         a.slug,
-      summary:      (a.summary || '').slice(0, 200),
-      category:     a.category,
+      title: a.title,
+      slug: a.slug,
+      summary: (a.summary || '').slice(0, 200),
+      category: a.category,
       publish_date: a.publish_date,
-      source:       a.source_name,
-      image:        a.featured_image_url || null,
-      url:          articlePath(a.category, a.slug),
+      source: a.source_name,
+      image: a.featured_image_url || null,
+      url: articlePath(a.category, a.slug),
     })),
     null,
     0
@@ -435,9 +435,9 @@ function escapeHtml(str) {
 
 function formatDisplayDate(date) {
   return date.toLocaleDateString('en-US', {
-    year:  'numeric',
+    year: 'numeric',
     month: 'long',
-    day:   'numeric',
+    day: 'numeric',
   });
 }
 
