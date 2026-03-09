@@ -1,8 +1,6 @@
 # Cloudflare Pages redirect rules
 
-# ── Clean article URLs (no .html extension) ──────────────────────────────────
-# /articles/category/slug  →  /articles/category/slug.html
-/articles/:category/:slug   /articles/:category/:slug.html   200
+# Article links use .html explicitly — no rewrite (avoids ERR_TOO_MANY_REDIRECTS)
 
 # ── Category pages (no .html extension) ──────────────────────────────────────
 /category/:cat   /category/:cat.html   200
@@ -23,5 +21,4 @@
 
 # ── Trailing slashes ──────────────────────────────────────────────────────────
 /home            /   301
-/articles/       /   301
 /category/       /   301
