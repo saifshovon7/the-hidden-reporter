@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — The Hidden Reporter</title>
+  <meta name="description"
+    content="Contact The Hidden Reporter — send tips, corrections, feedback, or partnership enquiries.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-top">
+        <div class="header-date" id="site-date"></div>
+        <div class="header-logo">
+          <a href="/" class="logo-link">
+            <span class="logo-name">The Hidden Reporter</span>
+            <span class="logo-tagline">Uncovering stories behind the headlines.</span>
+          </a>
+        </div>
+        <div class="header-search">
+          <button class="search-toggle" aria-label="Toggle search" onclick="toggleSearch()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </button>
+          <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" onclick="toggleNav(this)">
+            <span></span><span></span><span></span>
+          </button>
+        </div>
+      </div>
+      <div id="search-bar" class="search-bar" hidden>
+        <form action="/search.html" method="get" class="search-form">
+          <input type="search" name="q" placeholder="Search articles…" class="search-input" autofocus>
+          <button type="submit" class="search-btn">Search</button>
+        </form>
+      </div>
+      <nav class="main-nav" id="main-nav" aria-label="Main navigation">
+        <a href="/">Home</a>
+        <a href="/category/general.html">General</a>
+        <a href="/category/technology.html">Technology</a>
+        <a href="/category/business.html">Business</a>
+        <a href="/category/science.html">Science</a>
+        <a href="/category/world.html">World</a>
+        <a href="/category/politics.html">Politics</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="site-main">
+    <div class="static-page">
+
+      <h1>Contact Us</h1>
+
+      <p>We welcome tips, story ideas, corrections, partnership enquiries, and reader feedback. Use the form below or
+        reach us directly.</p>
+
+      <h2>Send a Message</h2>
+
+      <!-- Static form using Formspree or similar — replace action URL -->
+      <form class="contact-form" action="https://formspree.io/f/your-form-id" method="POST">
+        <div class="form-group">
+          <label for="contact-name">Your Name</label>
+          <input type="text" id="contact-name" name="name" required placeholder="Jane Smith">
+        </div>
+        <div class="form-group">
+          <label for="contact-email">Email Address</label>
+          <input type="email" id="contact-email" name="email" required placeholder="jane@example.com">
+        </div>
+        <div class="form-group">
+          <label for="contact-subject">Subject</label>
+          <input type="text" id="contact-subject" name="subject" required
+            placeholder="News tip / Correction / Feedback…">
+        </div>
+        <div class="form-group">
+          <label for="contact-message">Message</label>
+          <textarea id="contact-message" name="message" required
+            placeholder="Describe your tip, correction, or question…"></textarea>
+        </div>
+        <button type="submit" class="btn-submit">Send Message</button>
+      </form>
+
+      <h2>Other Ways to Reach Us</h2>
+
+      <p>For urgent corrections or copyright takedown requests, please include "URGENT" in the subject line. We respond
+        to all queries within 48 hours.</p>
+
+      <p>Follow us via <a href="/feed.xml">RSS Feed</a> for the latest articles.</p>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <strong>The Hidden Reporter</strong><br>
+        <em>Uncovering stories behind the headlines.</em>
+      </div>
+      <nav class="footer-nav">
+        <a href="/about.html">About</a>
+        <a href="/editorial-policy.html">Editorial Policy</a>
+        <a href="/contact.html">Contact</a>
+        <a href="/feed.xml">RSS Feed</a>
+        <a href="/sitemap.xml">Sitemap</a>
+      </nav>
+      <p class="footer-copy">&copy; <span id="footer-year"></span> The Hidden Reporter. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="/js/main.js" defer></script>
+  <script>
+    document.getElementById('site-date').textContent =
+      new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById('footer-year').textContent = new Date().getFullYear();
+  </script>
+</body>
+
+</html>
