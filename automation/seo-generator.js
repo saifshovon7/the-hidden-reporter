@@ -43,7 +43,7 @@ function generateSchemaMarkup(article) {
     },
     'mainEntityOfPage': {
       '@type': '@id',
-      '@id':   `${config.site.url}/articles/${article.category || 'general'}/${article.slug}`,
+      '@id':   `${config.site.url}/articles/${article.category || 'general'}/${article.slug}.html`,
     },
   };
 
@@ -65,7 +65,7 @@ function generateBreadcrumbSchema(article) {
     'itemListElement': [
       { '@type': 'ListItem', position: 1, name: 'Home',             item: config.site.url },
       { '@type': 'ListItem', position: 2, name: article.category,   item: `${config.site.url}/category/${article.category}.html` },
-      { '@type': 'ListItem', position: 3, name: article.title,      item: `${config.site.url}/articles/${article.category || 'general'}/${article.slug}` },
+      { '@type': 'ListItem', position: 3, name: article.title,      item: `${config.site.url}/articles/${article.category || 'general'}/${article.slug}.html` },
     ],
   });
 }
@@ -97,7 +97,7 @@ function detectTopics(title, content, tags) {
 
 // ── Open Graph tags string ────────────────────────────────────────────────────
 function generateOpenGraphTags(article) {
-  const articleUrl = `${config.site.url}/articles/${article.category || 'general'}/${article.slug}`;
+  const articleUrl = `${config.site.url}/articles/${article.category || 'general'}/${article.slug}.html`;
   const lines = [
     `<meta property="og:type" content="article">`,
     `<meta property="og:url" content="${articleUrl}">`,
