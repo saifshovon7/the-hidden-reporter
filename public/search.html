@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,6 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
 </head>
+
 <body>
 
   <header class="site-header">
@@ -25,7 +27,14 @@
         </div>
         <div class="header-search">
           <button class="search-toggle" aria-label="Toggle search" onclick="toggleSearch()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </button>
+          <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" onclick="toggleNav(this)">
+            <span></span><span></span><span></span>
           </button>
         </div>
       </div>
@@ -35,7 +44,7 @@
           <button type="submit" class="search-btn">Search</button>
         </form>
       </div>
-      <nav class="main-nav" aria-label="Main navigation">
+      <nav class="main-nav" id="main-nav" aria-label="Main navigation">
         <a href="/">Home</a>
         <a href="/category/general.html">General</a>
         <a href="/category/technology.html">Technology</a>
@@ -55,7 +64,8 @@
       </div>
 
       <form action="/search.html" method="get" class="search-page-form">
-        <input type="search" name="q" id="search-page-input" class="search-page-input" placeholder="Enter keywords…" autocomplete="off">
+        <input type="search" name="q" id="search-page-input" class="search-page-input" placeholder="Enter keywords…"
+          autocomplete="off">
         <button type="submit" class="search-page-btn">Search</button>
       </form>
 
@@ -86,8 +96,9 @@
   <script src="/js/main.js" defer></script>
   <script>
     document.getElementById('site-date').textContent =
-      new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+      new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     document.getElementById('footer-year').textContent = new Date().getFullYear();
   </script>
 </body>
+
 </html>
