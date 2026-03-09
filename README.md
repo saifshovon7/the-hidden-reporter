@@ -18,7 +18,7 @@ the-hidden-reporter/
 │   ├── _redirects              ← Cloudflare Pages routing
 │   ├── css/style.css           ← Newspaper stylesheet
 │   ├── js/main.js              ← Minimal client JS
-│   ├── article/                ← Generated article pages
+│   ├── articles/               ← Generated article pages (articles/{category}/{slug}.html)
 │   ├── category/               ← Generated category pages
 │   ├── topic/                  ← Generated topic cluster pages
 │   ├── search-index.json       ← Client-side search index
@@ -208,7 +208,7 @@ Edit sources in **Supabase → Table Editor → sources**:
 Every article automatically gets:
 - SEO-optimised title (≤ 60 chars)
 - Meta description (≤ 155 chars)
-- URL slug (`/article/slug-name.html`)
+- URL slug (`/articles/{category}/slug-name.html`)
 - `NewsArticle` Schema.org markup
 - Open Graph + Twitter Card tags
 - Breadcrumb schema
@@ -235,9 +235,11 @@ public/
 ├── search-index.json               ← Updated on every publish
 ├── feed.xml                        ← Updated on every publish
 ├── sitemap.xml                     ← Updated daily
-├── article/
-│   ├── ai-breakthrough-abc123.html
-│   ├── global-markets-rise-def456.html
+├── articles/
+│   ├── general/
+│   │   ├── ai-breakthrough-abc123.html
+│   │   └── ...
+│   ├── technology/
 │   └── ...
 ├── category/
 │   ├── technology.html
@@ -272,14 +274,15 @@ In `public/contact.html`, replace the Formspree `action` URL with your own form 
 
 ## Deployment Checklist
 
+See **[DEPLOYMENT.md](DEPLOYMENT.md)** for the complete step-by-step guide.
+
 - [ ] GitHub repository created and files uploaded
 - [ ] Supabase project created and `schema.sql` executed
-- [ ] Cloudflare Pages connected to GitHub repo
-- [ ] `.env` file filled in with all keys
-- [ ] `npm install` run successfully
-- [ ] `npm run once` test succeeded (articles published to GitHub)
-- [ ] Cloudflare Pages deployed successfully
-- [ ] `npm start` running on a server / PM2
+- [ ] Cloudflare Pages connected to GitHub (Build output directory = `public`)
+- [ ] Railway project created with all environment variables
+- [ ] GitHub token has **Contents: Read and write**
+- [ ] Google News sources disabled in Supabase (optional, recommended)
+- [ ] `SITE_URL` matches your Cloudflare Pages URL
 
 ---
 
