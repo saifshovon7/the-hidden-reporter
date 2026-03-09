@@ -833,33 +833,122 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 /* ============================================================
-   RESPONSIVE
+   RESPONSIVE — Tablet (≤1024px)
    ============================================================ */
 @media (max-width: 1024px) {
+  /* Collapse 2-col layouts to single column */
   .layout-home,
   .layout-default,
   .layout-article {
     grid-template-columns: 1fr;
   }
+
+  /* Sidebar goes BELOW content on tablet/mobile */
   .home-sidebar,
   .sidebar,
-  .article-sidebar { order: -1; }
-  .articles-row { grid-template-columns: repeat(2, 1fr); }
-  .related-grid { grid-template-columns: repeat(2, 1fr); }
+  .article-sidebar {
+    order: 2;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--gap);
+  }
+
+  .articles-row  { grid-template-columns: repeat(2, 1fr); }
+  .related-grid  { grid-template-columns: repeat(2, 1fr); }
   .featured-grid { grid-template-columns: 1fr; }
-  .featured-side { border-left: none; padding-left: 0; border-top: var(--thin); padding-top: var(--gap); }
+
+  .featured-side {
+    border-left:  none;
+    padding-left: 0;
+    border-top:   var(--thin);
+    padding-top:  var(--gap);
+    display:      grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-@media (max-width: 640px) {
-  :root { --gap: 16px; }
-  .header-date { display: none; }
-  .logo-name { font-size: 1.6rem; }
-  .articles-grid  { grid-template-columns: 1fr; }
-  .articles-row   { grid-template-columns: 1fr; }
-  .related-grid   { grid-template-columns: 1fr; }
-  .main-nav a     { padding: 5px 8px; font-size: 0.7rem; }
-  .article-title  { font-size: 1.6rem; }
-  .article-body   { font-size: 1rem; }
+/* ============================================================
+   RESPONSIVE — Mobile (≤768px)
+   ============================================================ */
+@media (max-width: 768px) {
+  :root { --gap: 18px; }
+
+  /* Header */
+  .header-date   { display: none; }
+  .header-search { flex: 0 0 40px; }
+  .header-top    { padding: 10px 0 8px; }
+
+  /* Nav — horizontal scroll instead of wrapping */
+  .main-nav {
+    overflow-x:     auto;
+    flex-wrap:      nowrap;
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding:        4px 0;
+  }
+  .main-nav::-webkit-scrollbar { display: none; }
+  .main-nav a { white-space: nowrap; padding: 6px 12px; }
+
+  /* Sidebar back to single column */
+  .home-sidebar,
+  .sidebar,
+  .article-sidebar {
+    grid-template-columns: 1fr;
+  }
+
+  .featured-side {
+    grid-template-columns: 1fr;
+  }
+
+  /* Category sections row → 1 column */
+  .articles-row { grid-template-columns: 1fr; }
+
+  /* Article body */
+  .article-body  { max-width: 100%; }
+  .article-title { font-size: 1.8rem; }
+
+  /* Layout padding */
+  .layout-article { padding: 0; }
+  .category-section,
+  .topic-section   { padding: 0; }
+
+  /* Related grid */
+  .related-grid  { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ============================================================
+   RESPONSIVE — Small Mobile (≤480px)
+   ============================================================ */
+@media (max-width: 480px) {
+  :root { --gap: 14px; }
+
+  /* Logo */
+  .logo-name    { font-size: 1.5rem; }
+  .logo-tagline { display: none; }
+
+  /* Nav more compact */
+  .main-nav a { padding: 5px 9px; font-size: 0.68rem; }
+
+  /* Grids → single column */
+  .articles-grid { grid-template-columns: 1fr; }
+  .articles-row  { grid-template-columns: 1fr; }
+  .related-grid  { grid-template-columns: 1fr; }
+  .featured-side { grid-template-columns: 1fr; }
+
+  /* Article */
+  .article-title { font-size: 1.5rem; }
+  .article-body  { font-size: 0.97rem; line-height: 1.7; }
+
+  /* Search page form */
+  .search-page-form { flex-direction: column; }
+  .search-page-btn  { width: 100%; }
+
+  /* Footer */
+  .footer-inner { flex-direction: column; gap: 16px; }
+
+  /* Card summaries visible on mobile for readability */
+  .article-card--small .card-summary { display: block; font-size: 0.78rem; }
 }
 
 /* ============================================================
