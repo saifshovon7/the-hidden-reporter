@@ -42,7 +42,7 @@ function generateSchemaMarkup(article) {
       },
     },
     'mainEntityOfPage': {
-      '@type': '@id',
+      '@type': 'WebPage',
       '@id':   `${config.site.url}/articles/${article.category || 'general'}/${article.slug}.html`,
     },
   };
