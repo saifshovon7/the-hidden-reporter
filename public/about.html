@@ -26,6 +26,9 @@
           <button class="search-toggle" aria-label="Toggle search" onclick="toggleSearch()">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           </button>
+          <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" onclick="toggleNav(this)">
+            <span></span><span></span><span></span>
+          </button>
         </div>
       </div>
       <div id="search-bar" class="search-bar" hidden>
@@ -34,7 +37,7 @@
           <button type="submit" class="search-btn">Search</button>
         </form>
       </div>
-      <nav class="main-nav" aria-label="Main navigation">
+      <nav class="main-nav" id="main-nav" aria-label="Main navigation">
         <a href="/">Home</a>
         <a href="/category/general.html">General</a>
         <a href="/category/technology.html">Technology</a>
