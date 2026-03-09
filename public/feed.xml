@@ -5,7 +5,7 @@
     <link>https://the-hidden-reporter.pages.dev</link>
     <description>Uncovering stories behind the headlines.</description>
     <language>en-us</language>
-    <lastBuildDate>Mon, 09 Mar 2026 08:32:50 GMT</lastBuildDate>
+    <lastBuildDate>Mon, 09 Mar 2026 08:32:53 GMT</lastBuildDate>
     <atom:link href="https://the-hidden-reporter.pages.dev/feed.xml" rel="self" type="application/rss+xml"/>
   <item>
     <title><![CDATA[G7 Nations to Hold Emergency Meeting on Oil Amid Stock Market Slump]]></title>
@@ -216,6 +216,14 @@
     <category>general</category>
   </item>
   <item>
+    <title><![CDATA[New-Era F1 Leaves Drivers with Mixed Feelings]]></title>
+    <link>https://the-hidden-reporter.pages.dev/articles/general/new-era-f1-leaves-drivers-with-mixed-feelings-mmixbdjc</link>
+    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/general/new-era-f1-leaves-drivers-with-mixed-feelings-mmixbdjc</guid>
+    <description><![CDATA[The opening race of Formula 1's new era in Australia left drivers with mixed feelings about the sport's new technology and driving styles.]]></description>
+    <pubDate>Sun, 08 Mar 2026 11:38:50 GMT</pubDate>
+    <category>general</category>
+  </item>
+  <item>
     <title><![CDATA[Bipartisan Coalition Unveils Roadmap for Responsible AI Development]]></title>
     <link>https://the-hidden-reporter.pages.dev/articles/technology/bipartisan-coalition-unveils-roadmap-for-responsible-ai-development-mmix3acf</link>
     <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/bipartisan-coalition-unveils-roadmap-for-responsible-ai-development-mmix3acf</guid>
@@ -237,14 +245,6 @@
     <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/google-ceo-sundar-pichai-receives-dollar692-million-pay-package-mmix3vsn</guid>
     <description><![CDATA[Google CEO Sundar Pichai's $692 million pay package is tied to performance, making him one of the highest-paid executives on the planet.]]></description>
     <pubDate>Sun, 08 Mar 2026 00:20:10 GMT</pubDate>
-    <category>technology</category>
-  </item>
-  <item>
-    <title><![CDATA[Grammarly's 'Expert Review' Falls Short of Actual Expertise]]></title>
-    <link>https://the-hidden-reporter.pages.dev/articles/technology/grammarlys-expert-review-falls-short-of-actual-expertise-mmix43ub</link>
-    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/grammarlys-expert-review-falls-short-of-actual-expertise-mmix43ub</guid>
-    <description><![CDATA[Grammarly's Expert Review feature has been criticized for not actually providing expert feedback, but rather using AI-generated suggestions that reference published works of well-known authors and journalists.]]></description>
-    <pubDate>Sat, 07 Mar 2026 22:56:31 GMT</pubDate>
     <category>technology</category>
   </item>
   </channel>
