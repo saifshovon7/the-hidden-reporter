@@ -35,6 +35,7 @@ body {
   color:            var(--black);
   line-height:      1.6;
   -webkit-font-smoothing: antialiased;
+  overflow-x:       hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -990,14 +991,37 @@ img { max-width: 100%; height: auto; display: block; }
   .footer-nav   { justify-content: center; }
   .footer-copy  { padding-top: 8px; }
 
-  /* Trending bar */
-  .trending-bar { padding: 6px var(--gap); gap: 8px; }
+  /* Trending bar — compact on mobile */
+  .trending-bar {
+    padding:        6px var(--gap);
+    gap:            6px;
+    flex-wrap:      wrap;
+  }
+  .trending-tag { font-size: 0.7rem; padding: 2px 6px; }
 
   /* Cards */
   .article-card--large .card-title { font-size: 1.4rem; }
 
   /* Page titles */
   .page-title { font-size: 1.6rem; }
+
+  /* Shrink ad placeholders on mobile — they dominate too much */
+  .ad-placeholder {
+    padding: 20px 12px;
+    font-size: 0.7rem;
+  }
+  .sidebar-ad .ad-placeholder { padding: 16px 10px; }
+  .footer-ad .ad-placeholder { padding: 16px 12px; }
+
+  /* Widgets — tighter */
+  .widget-title { margin-bottom: 10px; font-size: 0.7rem; }
+  .popular-item { padding: 8px 0; }
+  .popular-num { font-size: 1.2rem; width: 24px; }
+
+  /* Tighter container padding */
+  .header-inner,
+  .site-main,
+  .footer-inner { padding-left: 12px; padding-right: 12px; }
 }
 
 /* ============================================================
