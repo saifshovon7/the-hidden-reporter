@@ -44,6 +44,7 @@ const config = {
   publishing: {
     maxPerDay: parseInt(process.env.MAX_ARTICLES_PER_DAY || '30', 10),
     fetchIntervalMinutes: parseInt(process.env.FETCH_INTERVAL_MINUTES || '45', 10),
+    postPublishDelayMinutes: parseInt(process.env.POST_PUBLISH_DELAY_MINUTES || '5', 10),
     cleanupMonths: 24,
   },
 
