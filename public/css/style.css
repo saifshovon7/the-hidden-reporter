@@ -133,8 +133,6 @@ select {
   align-items: center;
   height: var(--header-h);
   gap: var(--gap);
-  overflow: hidden;
-  /* never wider than viewport */
   box-sizing: border-box;
   width: 100%;
 }
@@ -144,10 +142,8 @@ select {
   display: flex;
   flex-direction: column;
   line-height: 1.1;
-  flex-shrink: 1;
-  /* allow logo to compress rather than overflow */
+  flex-shrink: 0;
   min-width: 0;
-  overflow: hidden;
 }
 
 .logo-name {
@@ -200,6 +196,7 @@ select {
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .header-btn {
@@ -1449,44 +1446,12 @@ a.card-link-wrap {
 }
 
 /* ============================================================
-   RESPONSIVE — Mobile (≤768px)
+   RESPONSIVE — Tablet + Mobile Header (≤1024px)
+   Show hamburger menu, hide inline nav on tablets and phones
    ============================================================ */
-@media (max-width: 768px) {
-  :root {
-    --gap: 16px;
-  }
+@media (max-width: 1024px) {
 
-  /* Hard-clamp everything to viewport width */
-  html,
-  body {
-    overflow-x: hidden;
-    max-width: 100vw;
-  }
-
-  * {
-    max-width: 100%;
-  }
-
-  img,
-  video,
-  iframe,
-  table {
-    max-width: 100% !important;
-  }
-
-  /* Header — keep logo + hamburger only */
-  .header-inner {
-    gap: 8px;
-  }
-
-  .logo-name {
-    font-size: 1.1rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 180px;
-  }
-
+  /* Hide inline nav, show hamburger for tablets & phones */
   .main-nav {
     display: none;
     flex-direction: column;
@@ -1495,7 +1460,6 @@ a.card-link-wrap {
   .main-nav.is-open {
     display: flex;
     position: fixed;
-    /* fixed so it overlays content cleanly */
     top: var(--header-h);
     left: 0;
     right: 0;
@@ -1528,7 +1492,7 @@ a.card-link-wrap {
     width: 100%;
   }
 
-  /* Search bar full width on mobile */
+  /* Search bar full width */
   .header-search-bar {
     left: 0;
     right: 0;
@@ -1542,8 +1506,42 @@ a.card-link-wrap {
   .search-input {
     font-size: 1rem;
   }
+}
 
-  /* prevents iOS zoom on focus */
+/* ============================================================
+   RESPONSIVE — Mobile (≤768px)
+   ============================================================ */
+@media (max-width: 768px) {
+  :root {
+    --gap: 16px;
+  }
+
+  /* Hard-clamp everything to viewport width */
+  html,
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  * {
+    max-width: 100%;
+  }
+
+  img,
+  video,
+  iframe,
+  table {
+    max-width: 100% !important;
+  }
+
+  /* Header */
+  .header-inner {
+    gap: 8px;
+  }
+
+  .logo-name {
+    font-size: 1.1rem;
+  }
 
   /* Layouts */
   .layout-home,
