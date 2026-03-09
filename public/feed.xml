@@ -5,7 +5,7 @@
     <link>https://the-hidden-reporter.pages.dev</link>
     <description>Uncovering stories behind the headlines.</description>
     <language>en-us</language>
-    <lastBuildDate>Mon, 09 Mar 2026 08:30:02 GMT</lastBuildDate>
+    <lastBuildDate>Mon, 09 Mar 2026 08:30:07 GMT</lastBuildDate>
     <atom:link href="https://the-hidden-reporter.pages.dev/feed.xml" rel="self" type="application/rss+xml"/>
   <item>
     <title><![CDATA[G7 Nations to Hold Emergency Meeting on Oil Amid Stock Market Slump]]></title>
@@ -176,6 +176,14 @@
     <category>general</category>
   </item>
   <item>
+    <title><![CDATA[Apple Prepares High-End 'Ultra' Products]]></title>
+    <link>https://the-hidden-reporter.pages.dev/articles/technology/apple-prepares-high-end-ultra-products-mmix7v4i</link>
+    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/apple-prepares-high-end-ultra-products-mmix7v4i</guid>
+    <description><![CDATA[Apple is reportedly preparing high-end 'ultra' products, including a touchscreen MacBook Pro and a foldable iPhone, which could cost around $2,000.]]></description>
+    <pubDate>Sun, 08 Mar 2026 17:51:15 GMT</pubDate>
+    <category>technology</category>
+  </item>
+  <item>
     <title><![CDATA[AI Man Camps Emerge as Solution for US Data Center Construction Boom]]></title>
     <link>https://the-hidden-reporter.pages.dev/articles/technology/ai-man-camps-emerge-as-solution-for-us-data-center-construction-boom-mmix2ukz</link>
     <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/ai-man-camps-emerge-as-solution-for-us-data-center-construction-boom-mmix2ukz</guid>
@@ -237,14 +245,6 @@
     <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/grammarlys-expert-review-falls-short-of-actual-expertise-mmix43ub</guid>
     <description><![CDATA[Grammarly's Expert Review feature has been criticized for not actually providing expert feedback, but rather using AI-generated suggestions that reference published works of well-known authors and journalists.]]></description>
     <pubDate>Sat, 07 Mar 2026 22:56:31 GMT</pubDate>
-    <category>technology</category>
-  </item>
-  <item>
-    <title><![CDATA[OpenAI Hardware Exec Quits Over Pentagon Deal]]></title>
-    <link>https://the-hidden-reporter.pages.dev/articles/technology/openai-hardware-exec-quits-over-pentagon-deal-mmix4bf7</link>
-    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/openai-hardware-exec-quits-over-pentagon-deal-mmix4bf7</guid>
-    <description><![CDATA[Caitlin Kalinowski, OpenAI's hardware executive, has resigned over the company's agreement with the Department of Defense, citing concerns over surveillance and autonomous weapons.]]></description>
-    <pubDate>Sat, 07 Mar 2026 20:44:25 GMT</pubDate>
     <category>technology</category>
   </item>
   </channel>
