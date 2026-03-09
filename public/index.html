@@ -101,6 +101,15 @@
     /* Category tabs */
     .tabs-row {
       margin-bottom: calc(var(--gap)*1.5);
+      overflow: hidden;
+      /* clip tab overflow on small screens */
+    }
+
+    .category-tabs {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      -webkit-overflow-scrolling: touch;
     }
 
     /* Breaking bar */
@@ -119,6 +128,8 @@
     @media (max-width: 768px) {
       .layout-home {
         grid-template-columns: 1fr !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
       }
 
       .home-sidebar {
@@ -140,12 +151,33 @@
         grid-template-columns: 1fr;
       }
 
+      /* Hero card — prevent title overflow */
       .hero-card .card-img {
-        max-height: 260px;
+        max-height: 240px;
+      }
+
+      .hero-card .card-title,
+      .article-card--large .card-title {
+        font-size: 1.45rem !important;
+        word-break: break-word;
+        overflow-wrap: break-word;
+      }
+
+      /* All card titles must wrap */
+      .card-title {
+        word-break: break-word;
+        overflow-wrap: break-word;
+      }
+
+      /* Min-width:0 prevents the flex child from overflowing its container */
+      .home-main {
+        min-width: 0;
+        width: 100%;
       }
 
       .breaking-bar {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        overflow: hidden;
       }
     }
 
