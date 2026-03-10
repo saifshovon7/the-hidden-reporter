@@ -118,12 +118,15 @@ async function preCallGuard(label = 'request') {
     }
   }
 
-  // Check if we need to pause
+  // Check if we need to pause — use configurable pause duration (default 30 min)
   if (rateLimitRemaining !== null && rateLimitRemaining < SAFE_THRESHOLD) {
+    const pauseMs = (config.github.pauseMinutes || 30) * 60 * 1000;
     const resetMs = (rateLimitReset || 0) * 1000;
-    const waitMs = Math.max(0, resetMs - Date.now()) + 5000; // +5s buffer
+    // Use the longer of: configured pause or time until reset + buffer
+    const resetWaitMs = Math.max(0, resetMs - Date.now()) + 5000;
+    const waitMs = Math.max(pauseMs, resetWaitMs);
     const waitMins = (waitMs / 60000).toFixed(1);
-    console.log(`[GitHub] Pausing requests — rate limit low (${rateLimitRemaining} remaining). Resuming in ${waitMins} min.`);
+    console.log(`[GitHub] ⚠ Rate limit LOW (${rateLimitRemaining}/${SAFE_THRESHOLD} threshold). Pausing ALL GitHub operations for ${waitMins} min.`);
     await sleep(waitMs);
     // Force re-read on next call
     rateLimitRemaining = null;
@@ -408,7 +411,11 @@ async function pushFiles(files, commitMessage) {
     for (const file of files) {
       const cachedSha = fileShaCache.get(file.path);
       if (cachedSha) {
-        const localSha = gitBlobSha(file.content);
+        // For base64-encoded binary files, decode before computing SHA
+        const rawContent = file.encoding === 'base64'
+          ? Buffer.from(file.content, 'base64').toString('binary')
+          : file.content;
+        const localSha = gitBlobSha(rawContent);
         if (localSha === cachedSha) {
           console.log(`[GitHub] Skipping unchanged: ${file.path}`);
           sessionSkipped++;
@@ -425,12 +432,20 @@ async function pushFiles(files, commitMessage) {
 
     // ── Create blobs ──────────────────────────────────────────────────────
     const treeItems = [];
-    for (const { path: filePath, content } of changedFiles) {
+    for (const file of changedFiles) {
+      const { path: filePath, content, encoding } = file;
       await preCallGuard(`git.createBlob(${filePath})`);
+
+      // If encoding is 'base64', content is already base64-encoded (binary files like images).
+      // Otherwise, convert UTF-8 text to base64.
+      const blobContent = encoding === 'base64'
+        ? content
+        : Buffer.from(content, 'utf8').toString('base64');
+
       const { data: blob } = await withBackoff(
         () => client.git.createBlob({
           owner, repo,
-          content: Buffer.from(content, 'utf8').toString('base64'),
+          content: blobContent,
           encoding: 'base64',
         }),
         `git.createBlob(${filePath})`
