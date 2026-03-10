@@ -5,8 +5,24 @@
     <link>https://the-hidden-reporter.pages.dev</link>
     <description>Uncovering stories behind the headlines.</description>
     <language>en-us</language>
-    <lastBuildDate>Tue, 10 Mar 2026 18:29:58 GMT</lastBuildDate>
+    <lastBuildDate>Tue, 10 Mar 2026 18:56:24 GMT</lastBuildDate>
     <atom:link href="https://the-hidden-reporter.pages.dev/feed.xml" rel="self" type="application/rss+xml"/>
+  <item>
+    <title><![CDATA[Oil and Gas Prices Rebound After Trump's War Comments]]></title>
+    <link>https://the-hidden-reporter.pages.dev/articles/general/oil-and-gas-prices-rebound-after-trumps-war-comments-mmkyy6lf.html</link>
+    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/general/oil-and-gas-prices-rebound-after-trumps-war-comments-mmkyy6lf.html</guid>
+    <description><![CDATA[US President Donald Trump's comments on the Iran war led to a sharp fall in oil and gas prices, but the global market remains volatile.]]></description>
+    <pubDate>Tue, 10 Mar 2026 18:06:58 GMT</pubDate>
+    <category>general</category>
+  </item>
+  <item>
+    <title><![CDATA[Glasgow Central Remains Closed Until Next Week, Low-Level Services Resume]]></title>
+    <link>https://the-hidden-reporter.pages.dev/articles/general/glasgow-central-remains-closed-until-next-week-low-level-services-resume-mmky80bv.html</link>
+    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/general/glasgow-central-remains-closed-until-next-week-low-level-services-resume-mmky80bv.html</guid>
+    <description><![CDATA[Glasgow Central's main station remains closed until next week due to a fire that destroyed a neighboring building, but low-level services will resume on Wednesday.]]></description>
+    <pubDate>Tue, 10 Mar 2026 17:53:17 GMT</pubDate>
+    <category>general</category>
+  </item>
   <item>
     <title><![CDATA[Reeves Faces Calls to Ditch Fuel Tax Hike Amid Iran Conflict]]></title>
     <link>https://the-hidden-reporter.pages.dev/articles/general/reeves-faces-calls-to-ditch-fuel-tax-hike-amid-iran-conflict-mmkwuine.html</link>
@@ -205,6 +221,14 @@
     <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/tech-companies-scramble-to-respond-amid-escalating-us-israel-war-with-iran-mmkxn3l7.html</guid>
     <description><![CDATA[Tech companies, including Amazon, Google, and Nvidia, are taking steps to protect employees and facilities in the Middle East amid the US-Israel war with Iran, with some implementing emergency protocols and urging staff to work remotely.]]></description>
     <pubDate>Wed, 04 Mar 2026 14:57:00 GMT</pubDate>
+    <category>technology</category>
+  </item>
+  <item>
+    <title><![CDATA[Quantum Computers Emerge: Do We Need Ethical Guidelines?]]></title>
+    <link>https://the-hidden-reporter.pages.dev/articles/technology/quantum-computers-emerge-do-we-need-ethical-guidelines-mmkyl6l9.html</link>
+    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/quantum-computers-emerge-do-we-need-ethical-guidelines-mmkyl6l9.html</guid>
+    <description><![CDATA[As quantum computers begin to emerge, experts question the need for ethical guidelines to ensure responsible use of these powerful machines.]]></description>
+    <pubDate>Tue, 03 Mar 2026 20:30:00 GMT</pubDate>
     <category>technology</category>
   </item>
   </channel>
