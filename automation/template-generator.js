@@ -480,16 +480,20 @@ ${items}
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /**
- * Sanitize image URL: return null for broken local paths (images that were
- * staged but never committed to the repo before the pipeline was fixed).
- * External URLs (https://...) are safe to use as-is.
+ * Sanitize image URL.
+ * - Self-hosted paths (/images/articles/...) are committed to GitHub and served
+ *   by Cloudflare Pages — allow them.
+ * - External https:// fallback URLs are also allowed.
+ * - Reject bare relative paths or anything without a valid prefix.
  */
 function sanitizeImageUrl(url) {
   if (!url) return null;
-  // Local paths like /images/articles/... don't exist on Cloudflare Pages
-  if (url.startsWith('/images/') || url.startsWith('images/')) return null;
-  return url;
+  if (url.startsWith('/images/')) return url;                          // self-hosted ✓
+  if (url.startsWith('https://') || url.startsWith('http://')) return url; // external ✓
+  if (url.startsWith('//')) return url;                                // protocol-relative ✓
+  return null;                                                         // reject everything else
 }
+
 
 function capitalize(str) {
   return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
