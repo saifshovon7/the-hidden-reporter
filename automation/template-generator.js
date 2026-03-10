@@ -109,19 +109,20 @@ function generateArticleCard(article, size = 'small') {
   const href = articlePath(article.category, article.slug);
   const hLevel = size === 'large' ? '2' : size === 'medium' ? '3' : '4';
   const timeStr = timeAgo(new Date(article.publish_date));
-  const imgHtml = article.featured_image_url
+  const imgUrl = sanitizeImageUrl(article.featured_image_url);
+  const imgHtml = imgUrl
     ? `<div class="card-img-wrap">
         <a href="${href}" tabindex="-1" aria-hidden="true">
-          <img class="card-img" src="${escapeAttr(article.featured_image_url)}" alt="${escapeAttr(article.title)}" loading="lazy" width="800" height="450">
+          <img class="card-img" src="${escapeAttr(imgUrl)}" alt="${escapeAttr(article.title)}" loading="lazy" width="800" height="450">
         </a>
       </div>`
     : '';
 
   if (size === 'small') {
     return `<article class="article-card article-card--small">
-  ${article.featured_image_url ? `<div class="card-img-wrap" style="width:100px;flex-shrink:0;margin:0;aspect-ratio:unset">
+  ${imgUrl ? `<div class="card-img-wrap" style="width:100px;flex-shrink:0;margin:0;aspect-ratio:unset">
     <a href="${href}" tabindex="-1" aria-hidden="true">
-      <img class="card-img" src="${escapeAttr(article.featured_image_url)}" alt="" loading="lazy" style="width:100px;height:70px;aspect-ratio:unset">
+      <img class="card-img" src="${escapeAttr(imgUrl)}" alt="" loading="lazy" style="width:100px;height:70px;aspect-ratio:unset">
     </a>
   </div>` : ''}
   <div class="card-body">
@@ -156,9 +157,10 @@ function generateArticlePage(article, related = [], sidebarAd = '', inArticleAd 
   const publishedStr = formatDisplayDate(new Date(article.publish_date));
   const relatedHtml = related.length ? generateRelatedArticles(related) : '';
 
-  const imageHtml = article.featured_image_url
+  const imageUrl = sanitizeImageUrl(article.featured_image_url);
+  const imageHtml = imageUrl
     ? `<figure class="article-hero">
-        <img src="${escapeAttr(article.featured_image_url)}" alt="${escapeAttr(article.title)}" loading="eager" width="1200" height="630">
+        <img src="${escapeAttr(imageUrl)}" alt="${escapeAttr(article.title)}" loading="eager" width="1200" height="630">
         <figcaption>Image credit: ${escapeHtml(article.featured_image_credit || article.source_name)}</figcaption>
       </figure>`
     : '';
@@ -254,9 +256,9 @@ function generateArticlePage(article, related = [], sidebarAd = '', inArticleAd 
 function generateRelatedArticles(articles) {
   const items = articles.slice(0, 3).map(a => `
     <article class="article-card article-card--medium card-lift">
-      ${a.featured_image_url ? `<div class="card-img-wrap">
+      ${sanitizeImageUrl(a.featured_image_url) ? `<div class="card-img-wrap">
         <a href="${articlePath(a.category, a.slug)}" tabindex="-1" aria-hidden="true">
-          <img class="card-img" src="${escapeAttr(a.featured_image_url)}" alt="" loading="lazy">
+          <img class="card-img" src="${escapeAttr(sanitizeImageUrl(a.featured_image_url))}" alt="" loading="lazy">
         </a>
       </div>` : ''}
       <div class="card-body">
@@ -431,7 +433,7 @@ function generateSearchIndex(articles) {
       category: a.category,
       publish_date: a.publish_date,
       source: a.source_name,
-      image: a.featured_image_url || null,
+      image: sanitizeImageUrl(a.featured_image_url) || null,
       url: articlePath(a.category, a.slug),
     })),
     null,
@@ -468,6 +470,19 @@ ${items}
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+/**
+ * Sanitize image URL: return null for broken local paths (images that were
+ * staged but never committed to the repo before the pipeline was fixed).
+ * External URLs (https://...) are safe to use as-is.
+ */
+function sanitizeImageUrl(url) {
+  if (!url) return null;
+  // Local paths like /images/articles/... don't exist on Cloudflare Pages
+  if (url.startsWith('/images/') || url.startsWith('images/')) return null;
+  return url;
+}
+
 function capitalize(str) {
   return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
 }
