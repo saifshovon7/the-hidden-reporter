@@ -19,7 +19,7 @@ const { fetchAllSources, markProcessed } = require('./fetcher');
 const { extractArticle } = require('./extractor');
 const { rewriteArticle } = require('./ai-rewriter');
 const { isDuplicate } = require('./duplicate-detector');
-const { publishArticle, getTodayCount, rebuildAll } = require('./publisher');
+const { publishArticle, getTodayCount, rebuildAll, flushStagedArticles } = require('./publisher');
 const { updateTrending } = require('./trending-detector');
 const { runCleanup } = require('./cleanup');
 const { generateSitemap } = require('./sitemap-generator');
@@ -127,9 +127,25 @@ async function runPipeline() {
     // 3. Mark all attempted URLs as processed
     await markProcessed(processedUrls);
 
-    // 4. Update trending topics
+    // 4. Flush any remaining staged articles to GitHub
+    if (published > 0) {
+      await flushStagedArticles();
+    }
+
+    // 5. Update trending topics
     if (published > 0) {
       await updateTrending();
+    }
+
+    // 6. Update sitemap after new articles
+    if (published > 0) {
+      try {
+        const sitemap = await generateSitemap();
+        await pushFile('public/sitemap.xml', sitemap, 'chore: update sitemap after publish');
+        console.log('[Pipeline] Sitemap updated.');
+      } catch (err) {
+        console.error('[Pipeline] Sitemap update error:', err.message);
+      }
     }
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
