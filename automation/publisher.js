@@ -17,7 +17,7 @@ const { generateArticlePage, generateCategoryPage, generateHomepage,
 const { pushFiles } = require('./github-pusher');
 const { getTopTrending } = require('./trending-detector');
 const { stageFiles, flush, getPendingCount } = require('./article-stager');
-const { downloadImage } = require('./image-handler');
+
 
 const supabase = createClient(config.supabase.url, config.supabase.serviceKey);
 
