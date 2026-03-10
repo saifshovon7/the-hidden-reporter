@@ -29,6 +29,9 @@ const config = {
     owner: process.env.GITHUB_OWNER || '',
     repo: process.env.GITHUB_REPO || 'the-hidden-reporter',
     branch: process.env.GITHUB_BRANCH || 'main',
+    safeThreshold: parseInt(process.env.GITHUB_SAFE_THRESHOLD || '100', 10),
+    minDelayMs: parseInt(process.env.GITHUB_MIN_DELAY_MS || '2000', 10),
+    maxCommitsPerHour: parseInt(process.env.GITHUB_MAX_COMMITS_HR || '20', 10),
   },
 
   // ── Optional APIs ─────────────────────────────────────────
