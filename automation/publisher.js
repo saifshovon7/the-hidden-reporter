@@ -35,6 +35,38 @@ async function getTodayCount() {
   return count || 0;
 }
 
+// ── Get today's published stats per category ─────────────────────────────────
+async function getTodayCategoryStats() {
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const { data, error } = await supabase
+    .from('articles')
+    .select('category')
+    .gte('publish_date', startOfDay.toISOString());
+
+  const stats = {};
+  for (const cat of config.categories) {
+    stats[cat] = 0;
+  }
+
+  if (error || !data) {
+    console.error(`[Publisher] Error getting category stats: ${error?.message}`);
+    return stats;
+  }
+
+  for (const row of data) {
+    const c = row.category;
+    if (stats[c] !== undefined) {
+      stats[c]++;
+    } else {
+      stats[c] = 1;
+    }
+  }
+
+  return stats;
+}
+
 // ── Fetch ads from database ───────────────────────────────────────────────────
 async function getAds() {
   const { data } = await supabase
@@ -428,4 +460,4 @@ async function rebuildAll() {
   }
 }
 
-module.exports = { publishArticle, getTodayCount, rebuildAll, flushStagedArticles };
+module.exports = { publishArticle, getTodayCount, getTodayCategoryStats, rebuildAll, flushStagedArticles };
