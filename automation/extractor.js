@@ -4,7 +4,7 @@
  * Fetches an article page and extracts the title, clean text content, and images.
  */
 
-const axios  = require('axios');
+const axios = require('axios');
 const cheerio = require('cheerio');
 const { config } = require('./config');
 
@@ -48,7 +48,7 @@ function findContentBlock($, selectors) {
     const text = $(el).text().trim();
     if (text.length > bestLen) {
       bestLen = text.length;
-      best    = $(el).html() || '';
+      best = $(el).html() || '';
     }
   });
   return best;
@@ -85,7 +85,7 @@ function cleanContent($, rawHtml) {
 // ── Extract images ────────────────────────────────────────────────────────────
 function extractImages($, domain) {
   const images = [];
-  const seen   = new Set();
+  const seen = new Set();
 
   $('article img, [class*="article"] img, [class*="content"] img, figure img, .post img').each((_, el) => {
     let src = $(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy-src') || '';
@@ -97,11 +97,11 @@ function extractImages($, domain) {
     if (seen.has(src)) return;
     seen.add(src);
 
-    const alt    = $(el).attr('alt') || '';
+    const alt = $(el).attr('alt') || '';
     const credit = $(el).closest('figure').find('figcaption').text().trim() || domain;
 
     // Skip tiny icons / tracking pixels
-    const width  = parseInt($(el).attr('width')  || '0', 10);
+    const width = parseInt($(el).attr('width') || '0', 10);
     const height = parseInt($(el).attr('height') || '0', 10);
     if (width && width < 100) return;
     if (height && height < 100) return;
@@ -112,9 +112,57 @@ function extractImages($, domain) {
   return images;
 }
 
+// ── Decode Google News Redirect URLs ──────────────────────────────────────────
+async function resolveGoogleNewsUrl(googleUrl) {
+  try {
+    // 1. Fetch the Google News redirect payload page
+    const res = await HTTP.get(googleUrl, {
+      maxRedirects: 5,
+      validateStatus: () => true
+    });
+
+    // If it's already reached the destination, return it
+    if (!res.request.res.responseUrl.includes('news.google.com')) {
+      return res.request.res.responseUrl;
+    }
+
+    const html = res.data;
+    if (typeof html !== 'string') return googleUrl;
+
+    // 2. Try the primary attribute method (<c-wiz data-n-au="https://...">)
+    const dataAuMatch = html.match(/data-n-au=(?:["']|%22)(https:\/\/[^"'%]+)(?:["']|%22)/i);
+    if (dataAuMatch) return decodeURIComponent(dataAuMatch[1]);
+
+    // 3. Fallback: Search the raw JS payload for the publisher's absolute URL
+    const urlMatches = html.match(/"(https:\/\/[^"]+)"/g);
+    if (urlMatches) {
+      // Find the first URL that isn't owned by Google or w3/schema metadata
+      const validUrls = [...new Set(urlMatches.map(u => u.slice(1, -1)))];
+      const targetUrl = validUrls.find(u =>
+        !u.includes('google.com') &&
+        !u.includes('gstatic.com') &&
+        !u.includes('schema.org') &&
+        !u.includes('w3.org')
+      );
+      if (targetUrl) return targetUrl;
+    }
+
+    return googleUrl; // Return original if extraction fails
+  } catch (err) {
+    console.error(`[Extractor] Warning: Failed to decode Google News URL ${googleUrl}: ${err.message}`);
+    return googleUrl;
+  }
+}
+
 // ── Main extraction function ──────────────────────────────────────────────────
 async function extractArticle(item) {
-  const { url, title: rssTitle, category, pubDate } = item;
+  let { url, title: rssTitle, category, pubDate } = item;
+
+  // ── IMPORTANT: Resolve Google News pseudo-redirects before scraping ──
+  if (url.includes('news.google.com/rss/articles/')) {
+    url = await resolveGoogleNewsUrl(url);
+  }
+
   const domain = extractDomain(url);
 
   let html;
@@ -148,7 +196,7 @@ async function extractArticle(item) {
   const publishDate = rawDate ? new Date(rawDate) : (pubDate || new Date());
 
   // ── Content ───────────────────────────────────────────────
-  const cfg     = config.extractors.default;
+  const cfg = config.extractors.default;
   const rawHtml = findContentBlock($, cfg.contentSelectors);
   removeNoise($, cfg.removeSelectors);
 
@@ -177,11 +225,11 @@ async function extractArticle(item) {
 
   return {
     url,
-    title:               title.trim(),
+    title: title.trim(),
     content,
-    sourceName:          item.sourceName || domain,
-    sourceUrl:           url,
-    category:            category || 'general',
+    sourceName: item.sourceName || domain,
+    sourceUrl: url,
+    category: category || 'general',
     publishDate,
     featuredImageUrl,
     featuredImageCredit: featuredImageCredit.slice(0, 200),
