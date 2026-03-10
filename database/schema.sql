@@ -30,6 +30,8 @@ INSERT INTO sources (source_name, rss_url, category, active) VALUES
   ('Google News – Science',        'https://news.google.com/rss/search?q=science',                       'science',    true),
   ('Google News – World',          'https://news.google.com/rss/search?q=world+news',                    'world',      true),
   ('Google News – Politics',       'https://news.google.com/rss/search?q=politics',                      'politics',   true),
+  ('Google News – Finance',        'https://news.google.com/rss/search?q=finance',                       'finance',    true),
+  ('Google News – Sports',         'https://news.google.com/rss/search?q=sports',                        'sports',     true),
   ('BBC News',                     'http://feeds.bbci.co.uk/news/rss.xml',                               'general',    true),
   ('BBC Technology',               'http://feeds.bbci.co.uk/news/technology/rss.xml',                    'technology', true),
   ('Reuters',                      'https://feeds.reuters.com/reuters/topNews',                           'general',    true),
