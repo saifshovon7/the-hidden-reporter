@@ -34,7 +34,9 @@ let stagedArticleCount = 0;
  */
 async function stageFiles(files, isArticle = true) {
     for (const file of files) {
-        stagedFiles.set(file.path, file.content);
+        // Store the FULL file object (path, content, AND encoding) so binary
+        // image files don't lose their `encoding: 'base64'` flag on flush.
+        stagedFiles.set(file.path, { path: file.path, content: file.content, encoding: file.encoding || null });
     }
 
     if (isArticle) {
@@ -62,8 +64,11 @@ async function flush(commitMessage = 'feat: batch publish articles') {
     }
 
     const files = [];
-    for (const [path, content] of stagedFiles) {
-        files.push({ path, content });
+    for (const [, fileObj] of stagedFiles) {
+        // Reconstruct file entry preserving optional `encoding` for binary files
+        const entry = { path: fileObj.path, content: fileObj.content };
+        if (fileObj.encoding) entry.encoding = fileObj.encoding;
+        files.push(entry);
     }
 
     console.log(`[Stager] Flushing ${files.length} files (${stagedArticleCount} articles) to GitHub...`);
