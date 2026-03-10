@@ -167,12 +167,20 @@ async function startScheduler() {
   console.log(`[Scheduler] Site: ${config.site.url}`);
 
   // ── Validate GitHub connectivity before doing anything ──
-  try {
-    await validateGitHub();
-  } catch (err) {
-    console.error('[Scheduler] GitHub validation failed — automation will not run until this is fixed.');
-    console.error('[Scheduler] Fix your GITHUB_TOKEN, GITHUB_OWNER, and GITHUB_REPO env vars in Railway.');
-    process.exit(1);
+  // Retry with exponential backoff rather than crashing — prevents Railway
+  // from restarting the container in a tight loop and exhausting the API rate limit.
+  let ghOk = false;
+  let backoffMs = 60_000; // start at 1 minute
+  while (!ghOk) {
+    try {
+      await validateGitHub();
+      ghOk = true;
+    } catch (err) {
+      console.error('[Scheduler] GitHub validation failed:', err.message);
+      console.error(`[Scheduler] Retrying in ${backoffMs / 60_000} minute(s). Fix GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO in Railway if needed.`);
+      await sleep(backoffMs);
+      backoffMs = Math.min(backoffMs * 2, 30 * 60_000); // cap at 30 minutes
+    }
   }
 
   // Rebuild search index + category pages from existing DB articles on every startup
