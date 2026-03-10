@@ -2,12 +2,13 @@
 /**
  * fetcher.js
  * Fetches article links from Google News RSS, direct RSS feeds, and optional APIs.
+ * Balances content across categories to prevent starvation.
  */
 
-const RSSParser   = require('rss-parser');
-const axios       = require('axios');
+const RSSParser = require('rss-parser');
+const axios = require('axios');
 const { createClient } = require('@supabase/supabase-js');
-const { config }  = require('./config');
+const { config } = require('./config');
 
 const parser = new RSSParser({
   timeout: 20000,
@@ -150,12 +151,12 @@ async function fetchRssFeed(source) {
       }
 
       items.push({
-        url:        url.trim(),
-        title:      item.title || '',
+        url: url.trim(),
+        title: item.title || '',
         sourceName: source.source_name,
-        category:   source.category,
-        pubDate:    item.pubDate ? new Date(item.pubDate) : new Date(),
-        imageUrl:   item.mediaContent?.['$']?.url || item.enclosure?.url || null,
+        category: source.category || 'general',
+        pubDate: item.pubDate ? new Date(item.pubDate) : new Date(),
+        imageUrl: item.mediaContent?.['$']?.url || item.enclosure?.url || null,
       });
     }
 
@@ -164,6 +165,21 @@ async function fetchRssFeed(source) {
     console.error(`[Fetcher] RSS error for ${source.source_name}: ${err.message}`);
     return [];
   }
+}
+
+// ── Google News Fallback ───────────────────────────────────────────────────────
+async function fetchFallbackGoogleNews(category) {
+  console.log(`[Fetcher] Fetching Google News fallback for starved category: ${category}`);
+  // Map our categories to Google News search terms
+  let query = category;
+  if (category === 'world') query = 'world+news';
+  if (category === 'general') query = 'news';
+
+  return fetchRssFeed({
+    source_name: `Google News – fallback (${category})`,
+    rss_url: `https://news.google.com/rss/search?q=${query}`,
+    category: category
+  });
 }
 
 // ── Optional: NewsAPI ──────────────────────────────────────────────────────────
@@ -177,12 +193,12 @@ async function fetchFromNewsApi(category) {
 
     const res = await axios.get(endpoint, { timeout: 15000 });
     return (res.data?.articles || []).map(a => ({
-      url:        a.url,
-      title:      a.title || '',
+      url: a.url,
+      title: a.title || '',
       sourceName: a.source?.name || 'NewsAPI',
       category,
-      pubDate:    a.publishedAt ? new Date(a.publishedAt) : new Date(),
-      imageUrl:   a.urlToImage || null,
+      pubDate: a.publishedAt ? new Date(a.publishedAt) : new Date(),
+      imageUrl: a.urlToImage || null,
     }));
   } catch (err) {
     console.error(`[Fetcher] NewsAPI error: ${err.message}`);
@@ -198,12 +214,12 @@ async function fetchFromGdelt() {
     const url = 'https://api.gdeltproject.org/api/v2/doc/doc?query=news&mode=artlist&maxrecords=20&format=json';
     const res = await axios.get(url, { timeout: 15000 });
     return (res.data?.articles || []).map(a => ({
-      url:        a.url,
-      title:      a.title || '',
+      url: a.url,
+      title: a.title || '',
       sourceName: a.domain || 'GDELT',
-      category:   'general',
-      pubDate:    new Date(),
-      imageUrl:   null,
+      category: 'general',
+      pubDate: new Date(),
+      imageUrl: null,
     }));
   } catch (err) {
     console.error(`[Fetcher] GDELT error: ${err.message}`);
@@ -212,7 +228,7 @@ async function fetchFromGdelt() {
 }
 
 // ── Main fetch function ────────────────────────────────────────────────────────
-async function fetchAllSources() {
+async function fetchAllSources(categoryStats = {}) {
   console.log('[Fetcher] Loading active sources from database...');
 
   const { data: sources, error } = await supabase
@@ -251,22 +267,100 @@ async function fetchAllSources() {
   }
 
   // De-duplicate by URL within this batch
-  const seen  = new Set();
-  const unique = allItems.filter(item => {
+  const seen = new Set();
+  const uniqueItems = allItems.filter(item => {
     if (!item.url || seen.has(item.url)) return false;
     seen.add(item.url);
     return true;
   });
 
   // Filter against already-processed URLs
-  const urls          = unique.map(i => i.url);
-  const freshUrls     = await filterUnprocessed(urls);
-  const freshUrlSet   = new Set(freshUrls);
-  const freshItems    = unique.filter(i => freshUrlSet.has(i.url));
+  const urls = uniqueItems.map(i => i.url);
+  const freshUrls = await filterUnprocessed(urls);
+  const freshUrlSet = new Set(freshUrls);
+  const freshItems = uniqueItems.filter(i => freshUrlSet.has(i.url));
 
-  console.log(`[Fetcher] ${freshItems.length} new articles found (${unique.length - freshItems.length} already processed).`);
+  console.log(`[Fetcher] ${freshItems.length} new articles found originally (${uniqueItems.length - freshItems.length} already processed).`);
 
-  return freshItems;
+  // --------- CATEGORY BALANCING & FALLBACK SYSTEM ---------
+  // 1. Group items by category
+  const categoriesMap = new Map();
+  for (const cat of config.categories) {
+    categoriesMap.set(cat, []);
+  }
+
+  for (const item of freshItems) {
+    const cat = item.category || 'general';
+    if (!categoriesMap.has(cat)) {
+      categoriesMap.set(cat, []);
+    }
+    categoriesMap.get(cat).push(item);
+  }
+
+  // 2. Check for starvation and fetch fallback if needed
+  const targets = config.publishing.categoryTargets || {};
+  for (const cat of config.categories) {
+    const publishedToday = categoryStats[cat] || 0;
+    const target = targets[cat] || 3;
+    const available = categoriesMap.get(cat).length;
+
+    // If we've published less than target, and we don't have enough fresh items to reach the target...
+    if (publishedToday + available < target) {
+      const fallbackItems = await fetchFallbackGoogleNews(cat);
+      for (const fItem of fallbackItems) {
+        if (!seen.has(fItem.url)) {
+          seen.add(fItem.url);
+          categoriesMap.get(cat).push(fItem);
+        }
+      }
+    }
+  }
+
+  // Refilter just in case fallback brought in processed items
+  // (We do this as a batch to minimize DB calls)
+  const allCurrentUrls = [];
+  for (const items of categoriesMap.values()) {
+    allCurrentUrls.push(...items.map(i => i.url));
+  }
+  const verifiedFreshUrlList = await filterUnprocessed(allCurrentUrls);
+  const verifiedFreshSet = new Set(verifiedFreshUrlList);
+
+  for (const cat of categoriesMap.keys()) {
+    const validItems = categoriesMap.get(cat).filter(i => verifiedFreshSet.has(i.url));
+    categoriesMap.set(cat, validItems);
+  }
+
+  // 3. Prioritize categories that are furthest from their daily targets
+  const prioritizedCategories = [...config.categories].sort((a, b) => {
+    const targetA = config.publishing.categoryTargets?.[a] || 3;
+    const statsA = categoryStats[a] || 0;
+    const deficitA = Math.max(0, targetA - statsA);
+
+    const targetB = config.publishing.categoryTargets?.[b] || 3;
+    const statsB = categoryStats[b] || 0;
+    const deficitB = Math.max(0, targetB - statsB);
+
+    return deficitB - deficitA; // highest deficit first
+  });
+
+  // 4. Implement rotation system: pick 1 from each category sequentially
+  const finalRotatedList = [];
+  let continueRotating = true;
+
+  while (continueRotating) {
+    continueRotating = false;
+    for (const cat of prioritizedCategories) {
+      const items = categoriesMap.get(cat);
+      if (items && items.length > 0) {
+        // Take the freshest item from this category
+        finalRotatedList.push(items.shift());
+        continueRotating = true; // Still have items to process
+      }
+    }
+  }
+
+  console.log(`[Fetcher] Balancing complete. Final fetch list contains ${finalRotatedList.length} articles across categories.`);
+  return finalRotatedList;
 }
 
 module.exports = { fetchAllSources, markProcessed };
