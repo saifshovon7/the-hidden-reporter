@@ -79,7 +79,85 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://the-hidden-reporter.pages.dev/topic/openai.html</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/topic/public%20inquiry.html</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/topic/royal%20navy.html</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/topic/italy.html</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/topic/maternity%20inquiry.html</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/topic/prison.html</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/topic/iran.html</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://the-hidden-reporter.pages.dev/topic/murder.html</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/topic/middle%20east.html</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/topic/mediterranean.html</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/topic/hms%20dragon.html</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/topic/uk.html</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/topic/fortnite.html</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/topic/eastern%20mediterranean.html</loc>
     <lastmod>2026-03-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -98,12 +176,6 @@
   </url>
   <url>
     <loc>https://the-hidden-reporter.pages.dev/topic/cyprus.html</loc>
-    <lastmod>2026-03-10</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://the-hidden-reporter.pages.dev/topic/mediterranean.html</loc>
     <lastmod>2026-03-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -163,40 +235,22 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://the-hidden-reporter.pages.dev/topic/openai.html</loc>
+    <loc>https://the-hidden-reporter.pages.dev/articles/technology/epic-raises-fortnite-v-bucks-price-amid-rising-costs-mmkvz8rk.html</loc>
     <lastmod>2026-03-10</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://the-hidden-reporter.pages.dev/topic/public%20inquiry.html</loc>
+    <loc>https://the-hidden-reporter.pages.dev/articles/general/uk-warship-departs-for-eastern-mediterranean-amid-tensions-mmkvsq2v.html</loc>
     <lastmod>2026-03-10</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://the-hidden-reporter.pages.dev/topic/royal%20navy.html</loc>
+    <loc>https://the-hidden-reporter.pages.dev/articles/general/paris-fashion-week-2026-highlights-trends-and-sights-mmkw9us6.html</loc>
     <lastmod>2026-03-10</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://the-hidden-reporter.pages.dev/topic/italy.html</loc>
-    <lastmod>2026-03-10</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://the-hidden-reporter.pages.dev/topic/maternity%20inquiry.html</loc>
-    <lastmod>2026-03-10</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://the-hidden-reporter.pages.dev/topic/prison.html</loc>
-    <lastmod>2026-03-10</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://the-hidden-reporter.pages.dev/articles/general/nottingham-triple-killer-assaulted-husband-and-wife-weeks-before-attacks-mmkv1adk.html</loc>
@@ -253,6 +307,12 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://the-hidden-reporter.pages.dev/articles/technology/gps-jamming-disrupts-maritime-navigation-in-middle-east-mmkvg8yz.html</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://the-hidden-reporter.pages.dev/articles/technology/anthropic-sues-us-government-over-supply-chain-risk-label-mmkt46on.html</loc>
     <lastmod>2026-03-10</lastmod>
     <changefreq>never</changefreq>
@@ -272,6 +332,24 @@
   </url>
   <url>
     <loc>https://the-hidden-reporter.pages.dev/articles/technology/tfl-hack-in-2024-exposed-data-of-10-million-people-bbc-investigation-reveals-mmkut7je.html</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/articles/technology/musk-defends-social-media-posts-in-california-trial-mmkv88du.html</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/articles/technology/online-privacy-a-luxury-not-a-right-in-the-digital-age-mmkvnenv.html</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/articles/technology/father-sues-google-over-ais-alleged-role-in-sons-death-mmkwcifj.html</loc>
     <lastmod>2026-03-10</lastmod>
     <changefreq>never</changefreq>
     <priority>0.7</priority>
