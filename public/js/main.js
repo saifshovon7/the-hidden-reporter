@@ -104,13 +104,16 @@ document.addEventListener('click', e => {
 })();
 
 // ── Popular articles widget ───────────────────────────────────────────────────
+// BUG FIX: sort by view_count DESC so this shows the MOST READ articles,
+// not just the most recent ones (which was the previous broken behaviour).
 (async function initPopular() {
   const container = document.getElementById('popular-articles');
   if (!container) return;
   try {
     const res = await fetch('/search-index.json');
     const index = await res.json();
-    const top5 = index.slice(0, 5);
+    // Sort by view_count descending — view_count is now included in the index
+    const top5 = [...index].sort((a, b) => (b.view_count || 0) - (a.view_count || 0)).slice(0, 5);
     container.innerHTML = top5.map((a, i) => `
       <div class="popular-item">
         <span class="popular-num">${String(i + 1).padStart(2, '0')}</span>
@@ -124,22 +127,24 @@ document.addEventListener('click', e => {
 
 // ── View tracking (article pages) ─────────────────────────────────────────────
 (function trackView() {
-  const articleId = document.querySelector('article[itemtype="https://schema.org/NewsArticle"]')
-    ?.getAttribute('data-id');
-  if (!articleId) return;
+  // BUG FIX: read data-slug (was data-id which was never set)
+  const articleSlug = document.querySelector('article[itemtype="https://schema.org/NewsArticle"]')
+    ?.getAttribute('data-slug');
+  if (!articleSlug) return;
 
-  const supabaseUrl = document.documentElement.dataset.supabaseUrl;
-  const supabaseKey = document.documentElement.dataset.supabaseKey;
-  if (!supabaseUrl || !supabaseKey) return;
+  // Config is written into window.__THR__ by the inline <script> in <head>
+  const cfg = window.__THR__;
+  if (!cfg || !cfg.supabaseUrl || !cfg.supabaseKey) return;
 
-  fetch(`${supabaseUrl}/rest/v1/rpc/increment_view_count`, {
+  // BUG FIX: RPC function signature is increment_view_count(article_slug TEXT)
+  fetch(`${cfg.supabaseUrl}/rest/v1/rpc/increment_view_count`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'apikey': supabaseKey,
-      'Authorization': `Bearer ${supabaseKey}`,
+      'apikey': cfg.supabaseKey,
+      'Authorization': `Bearer ${cfg.supabaseKey}`,
     },
-    body: JSON.stringify({ article_id: articleId }),
+    body: JSON.stringify({ article_slug: articleSlug }),
   }).catch(() => { /* silent */ });
 })();
 
