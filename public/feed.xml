@@ -5,8 +5,16 @@
     <link>https://the-hidden-reporter.pages.dev</link>
     <description>Uncovering stories behind the headlines.</description>
     <language>en-us</language>
-    <lastBuildDate>Tue, 10 Mar 2026 16:55:41 GMT</lastBuildDate>
+    <lastBuildDate>Tue, 10 Mar 2026 17:02:26 GMT</lastBuildDate>
     <atom:link href="https://the-hidden-reporter.pages.dev/feed.xml" rel="self" type="application/rss+xml"/>
+  <item>
+    <title><![CDATA[HMS Dragon Deploys to Cyprus Amid Tensions in the Mediterranean]]></title>
+    <link>https://the-hidden-reporter.pages.dev/articles/general/hms-dragon-deploys-to-cyprus-amid-tensions-in-the-mediterranean-mmkurwtk.html</link>
+    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/general/hms-dragon-deploys-to-cyprus-amid-tensions-in-the-mediterranean-mmkurwtk.html</guid>
+    <description><![CDATA[The Royal Navy's HMS Dragon has set sail from Portsmouth and is en route to Cyprus, where it will be deployed to the Mediterranean region in response to recent tensions.]]></description>
+    <pubDate>Tue, 10 Mar 2026 16:47:23 GMT</pubDate>
+    <category>general</category>
+  </item>
   <item>
     <title><![CDATA[Italy Acquires Rare Caravaggio Portrait for €30 Million]]></title>
     <link>https://the-hidden-reporter.pages.dev/articles/general/italy-acquires-rare-caravaggio-portrait-for-euro30-million-mmkug7ml.html</link>
@@ -85,6 +93,14 @@
     <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/sleep-enhancing-snacks-gain-popularity-amid-rising-demand-for-better-rest-mmku3esh.html</guid>
     <description><![CDATA[A mushroom-infused chocolate brand has gained popularity with its sleep-enhancing product, Nightcap, which boasts a list of ingredients that claim to improve sleep quality. The demand for sleep-enhancing products is on the rise, with natural supplements like melatonin being the most popular choice.]]></description>
     <pubDate>Fri, 06 Mar 2026 00:05:51 GMT</pubDate>
+    <category>technology</category>
+  </item>
+  <item>
+    <title><![CDATA[TfL Hack in 2024 Exposed Data of 10 Million People, BBC Investigation Reveals]]></title>
+    <link>https://the-hidden-reporter.pages.dev/articles/technology/tfl-hack-in-2024-exposed-data-of-10-million-people-bbc-investigation-reveals-mmkut7je.html</link>
+    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/tfl-hack-in-2024-exposed-data-of-10-million-people-bbc-investigation-reveals-mmkut7je.html</guid>
+    <description><![CDATA[A 2024 hack on Transport for London exposed the personal data of around 10 million people, the BBC has discovered, making it one of the biggest hacks in British history.]]></description>
+    <pubDate>Fri, 06 Mar 2026 00:05:12 GMT</pubDate>
     <category>technology</category>
   </item>
   </channel>
