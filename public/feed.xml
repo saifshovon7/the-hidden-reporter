@@ -5,7 +5,7 @@
     <link>https://the-hidden-reporter.pages.dev</link>
     <description>Uncovering stories behind the headlines.</description>
     <language>en-us</language>
-    <lastBuildDate>Tue, 10 Mar 2026 17:56:01 GMT</lastBuildDate>
+    <lastBuildDate>Tue, 10 Mar 2026 18:05:53 GMT</lastBuildDate>
     <atom:link href="https://the-hidden-reporter.pages.dev/feed.xml" rel="self" type="application/rss+xml"/>
   <item>
     <title><![CDATA[Reeves Faces Calls to Ditch Fuel Tax Hike Amid Iran Conflict]]></title>
@@ -173,6 +173,14 @@
     <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/father-sues-google-over-ais-alleged-role-in-sons-death-mmkwcifj.html</guid>
     <description><![CDATA[A Florida man's father is suing Google in the first wrongful death case in the US, alleging that the company's AI tool Gemini fueled a delusional spiral that led to his son's death. The lawsuit claims that Google's design choices maximized engagement through emotional dependency.]]></description>
     <pubDate>Wed, 04 Mar 2026 18:55:45 GMT</pubDate>
+    <category>technology</category>
+  </item>
+  <item>
+    <title><![CDATA[ICO Investigates Meta's AI Smart Glasses Data Practices]]></title>
+    <link>https://the-hidden-reporter.pages.dev/articles/technology/ico-investigates-metas-ai-smart-glasses-data-practices-mmkwy9ez.html</link>
+    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/ico-investigates-metas-ai-smart-glasses-data-practices-mmkwy9ez.html</guid>
+    <description><![CDATA[The UK's data watchdog, the Information Commissioner's Office (ICO), has announced it will be writing to Meta following a report from Swedish newspapers claiming outsourced workers were able to view sensitive content filmed by the company's AI smart glasses.]]></description>
+    <pubDate>Wed, 04 Mar 2026 16:23:17 GMT</pubDate>
     <category>technology</category>
   </item>
   </channel>
