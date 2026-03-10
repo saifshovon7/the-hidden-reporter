@@ -17,7 +17,7 @@ const { generateArticlePage, generateCategoryPage, generateHomepage,
 const { pushFiles } = require('./github-pusher');
 const { getTopTrending } = require('./trending-detector');
 const { stageFiles, flush, getPendingCount } = require('./article-stager');
-
+const { downloadImage } = require('./image-handler');
 
 const supabase = createClient(config.supabase.url, config.supabase.serviceKey);
 
@@ -245,12 +245,33 @@ async function publishArticle(extractedData, rewrittenData) {
     author: extractedData.sourceAuthor,
   });
 
-  // ── Use external featured image URL directly ───────────────────────────
-  // We use the original og:image URL from the source site instead of
-  // downloading and re-hosting images. This is simpler and more reliable.
-  const featuredImageUrl = extractedData.featuredImageUrl || null;
+  // ── Download featured image and self-host on GitHub / Cloudflare Pages ──
+  // Downloading ensures images never expire (no hotlink protection issues).
+  // Falls back to the original external URL if the download fails.
+  let featuredImageUrl = extractedData.featuredImageUrl || null;
   const featuredImageCredit = extractedData.featuredImageCredit || extractedData.domain;
-  const imageFiles = []; // kept for compatibility — no binary images staged
+  const imageFiles = [];
+
+  if (featuredImageUrl) {
+    try {
+      const downloaded = await downloadImage(featuredImageUrl, seo.slug);
+      if (downloaded) {
+        // Use the self-hosted local path (e.g. /images/articles/slug.jpg)
+        featuredImageUrl = downloaded.localUrl;
+        // Queue the binary image for the batch GitHub commit
+        imageFiles.push({
+          path: downloaded.localPath,
+          content: downloaded.content,
+          encoding: 'base64',
+        });
+        console.log(`[Publisher] Image self-hosted: ${downloaded.localUrl}`);
+      } else {
+        console.log(`[Publisher] Image download failed — falling back to external URL.`);
+      }
+    } catch (err) {
+      console.warn(`[Publisher] Image download error: ${err.message} — using external URL.`);
+    }
+  }
 
   // Build article record
   const articleRecord = {
