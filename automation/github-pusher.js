@@ -19,6 +19,41 @@ function getClient() {
 
 const { owner, repo, branch } = config.github;
 
+// ── Startup validation: verify repo exists and token has write access ─────────
+async function validateGitHub() {
+  const client = getClient();
+
+  // Fail fast if env vars are blank
+  if (!owner || !repo || !config.github.token) {
+    console.error('[GitHub] MISSING env vars: GITHUB_TOKEN, GITHUB_OWNER, or GITHUB_REPO are empty.');
+    console.error(`[GitHub]   GITHUB_OWNER  = "${owner}"`);
+    console.error(`[GitHub]   GITHUB_REPO   = "${repo}"`);
+    console.error(`[GitHub]   GITHUB_TOKEN  = "${config.github.token ? '***set***' : '(empty)'}"`);
+    throw new Error('[GitHub] Configuration incomplete — check Railway env vars.');
+  }
+
+  try {
+    // Check repo exists and token can read it
+    const { data } = await client.repos.get({ owner, repo });
+    console.log(`[GitHub] ✓ Repo found: ${data.full_name} (${data.private ? 'private' : 'public'})`);
+    console.log(`[GitHub] ✓ Default branch: ${data.default_branch}`);
+  } catch (err) {
+    if (err.status === 404) {
+      console.error(`[GitHub] ✗ Repository NOT FOUND: ${owner}/${repo}`);
+      console.error('[GitHub]   Possible causes:');
+      console.error(`[GitHub]   1. The repo "${owner}/${repo}" does not exist on GitHub.`);
+      console.error('[GitHub]   2. GITHUB_TOKEN does not have access to this private repo.');
+      console.error('[GitHub]   3. GITHUB_OWNER is wrong — check it in Railway env vars.');
+      console.error(`[GitHub]   4. Token scopes: needs "repo" (full) or "contents: write".`);
+    } else if (err.status === 401) {
+      console.error('[GitHub] ✗ Authentication failed — GITHUB_TOKEN is invalid or expired.');
+    } else {
+      console.error(`[GitHub] ✗ Unexpected error checking repo: ${err.message}`);
+    }
+    throw err;
+  }
+}
+
 // ── Get current SHA of a file (needed to update it) ──────────────────────────
 async function getFileSha(path) {
   try {
@@ -158,4 +193,4 @@ async function pushFiles(files, commitMessage) {
   console.log(`[GitHub] Batch commit: ${files.length} files → ${newCommit.sha.slice(0, 8)}`);
 }
 
-module.exports = { pushFile, pushFiles };
+module.exports = { pushFile, pushFiles, validateGitHub };
