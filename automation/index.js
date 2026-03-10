@@ -19,7 +19,7 @@ const { fetchAllSources, markProcessed } = require('./fetcher');
 const { extractArticle } = require('./extractor');
 const { rewriteArticle } = require('./ai-rewriter');
 const { isDuplicate } = require('./duplicate-detector');
-const { publishArticle, getTodayCount, rebuildAll, flushStagedArticles } = require('./publisher');
+const { publishArticle, getTodayCount, getTodayCategoryStats, rebuildAll, flushStagedArticles } = require('./publisher');
 const { updateTrending } = require('./trending-detector');
 const { runCleanup } = require('./cleanup');
 const { generateSitemap } = require('./sitemap-generator');
@@ -57,8 +57,16 @@ async function runPipeline() {
     console.log(`[Pipeline] ${remaining} publish slots remaining today.`);
     console.log(`[Pipeline] Post-publish delay: ${config.publishing.postPublishDelayMinutes} minutes between articles.`);
 
-    // 1. Fetch all sources
-    const fetchedItems = await fetchAllSources();
+    // Log current category stats
+    const categoryStats = await getTodayCategoryStats();
+    let statsLog = '[Automation] Category stats today: ';
+    for (const cat of config.categories) {
+      statsLog += `${cat}: ${categoryStats[cat] || 0}   `;
+    }
+    console.log(statsLog.trim());
+
+    // 1. Fetch all sources, passing current stats to allow intelligent balancing
+    const fetchedItems = await fetchAllSources(categoryStats);
     if (!fetchedItems.length) {
       console.log('[Pipeline] No new items to process.');
       return;
@@ -103,7 +111,8 @@ async function runPipeline() {
         const savedArticle = await publishArticle(extracted, rewritten);
         if (savedArticle) {
           published++;
-          console.log(`[Pipeline] ✓ Published (${published} today): "${savedArticle.title.slice(0, 60)}"`);
+          categoryStats[savedArticle.category] = (categoryStats[savedArticle.category] || 0) + 1;
+          console.log(`[Pipeline] ✓ Published (${published} today): "${savedArticle.title.slice(0, 60)}" [${savedArticle.category}]`);
         }
 
         processedUrls.push(item.url);
