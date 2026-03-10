@@ -29,9 +29,10 @@ const config = {
     owner: process.env.GITHUB_OWNER || '',
     repo: process.env.GITHUB_REPO || 'the-hidden-reporter',
     branch: process.env.GITHUB_BRANCH || 'main',
-    safeThreshold: parseInt(process.env.GITHUB_SAFE_THRESHOLD || '100', 10),
+    safeThreshold: parseInt(process.env.GITHUB_SAFE_THRESHOLD || '200', 10),
     minDelayMs: parseInt(process.env.GITHUB_MIN_DELAY_MS || '2000', 10),
     maxCommitsPerHour: parseInt(process.env.GITHUB_MAX_COMMITS_HR || '20', 10),
+    pauseMinutes: parseInt(process.env.GITHUB_PAUSE_MINUTES || '30', 10),
   },
 
   // ── Optional APIs ─────────────────────────────────────────
@@ -46,6 +47,7 @@ const config = {
   // ── Publishing ────────────────────────────────────────────
   publishing: {
     maxPerDay: parseInt(process.env.MAX_ARTICLES_PER_DAY || '30', 10),
+    maxArticlesPerBatch: parseInt(process.env.MAX_ARTICLES_PER_BATCH || '10', 10),
     fetchIntervalMinutes: parseInt(process.env.FETCH_INTERVAL_MINUTES || '45', 10),
     postPublishDelayMinutes: parseInt(process.env.POST_PUBLISH_DELAY_MINUTES || '5', 10),
     cleanupMonths: 24,
