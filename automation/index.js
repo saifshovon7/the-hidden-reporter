@@ -23,7 +23,7 @@ const { publishArticle, getTodayCount, rebuildAll } = require('./publisher');
 const { updateTrending } = require('./trending-detector');
 const { runCleanup } = require('./cleanup');
 const { generateSitemap } = require('./sitemap-generator');
-const { pushFile } = require('./github-pusher');
+const { pushFile, validateGitHub } = require('./github-pusher');
 
 // ── Validate config on startup ────────────────────────────────────────────────
 validate();
@@ -156,7 +156,7 @@ async function runDailyMaintenance() {
 }
 
 // ── Scheduler ─────────────────────────────────────────────────────────────────
-function startScheduler() {
+async function startScheduler() {
   const intervalMin = config.publishing.fetchIntervalMinutes;
   const cronExpr = `*/${intervalMin} * * * *`;
 
@@ -165,6 +165,15 @@ function startScheduler() {
   console.log(`[Scheduler] Daily limit: ${config.publishing.maxPerDay} articles.`);
   console.log(`[Scheduler] Post-publish delay: ${config.publishing.postPublishDelayMinutes} minutes.`);
   console.log(`[Scheduler] Site: ${config.site.url}`);
+
+  // ── Validate GitHub connectivity before doing anything ──
+  try {
+    await validateGitHub();
+  } catch (err) {
+    console.error('[Scheduler] GitHub validation failed — automation will not run until this is fixed.');
+    console.error('[Scheduler] Fix your GITHUB_TOKEN, GITHUB_OWNER, and GITHUB_REPO env vars in Railway.');
+    process.exit(1);
+  }
 
   // Rebuild search index + category pages from existing DB articles on every startup
   rebuildAll().then(() => runPipeline());
