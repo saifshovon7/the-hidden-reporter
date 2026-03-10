@@ -51,10 +51,20 @@ const config = {
     fetchIntervalMinutes: parseInt(process.env.FETCH_INTERVAL_MINUTES || '45', 10),
     postPublishDelayMinutes: parseInt(process.env.POST_PUBLISH_DELAY_MINUTES || '5', 10),
     cleanupMonths: 24,
+    // Daily target per category to prevent starvation
+    categoryTargets: {
+      technology: 6,
+      finance: 4,
+      sports: 4,
+      science: 3,
+      politics: 3,
+      world: 5,
+      general: 5
+    }
   },
 
   // ── Categories ────────────────────────────────────────────
-  categories: ['general', 'technology', 'business', 'science', 'world', 'politics', 'finance'],
+  categories: ['general', 'technology', 'business', 'science', 'world', 'politics', 'finance', 'sports'],
 
   // ── Content extraction selectors (site-specific overrides) ─
   extractors: {
