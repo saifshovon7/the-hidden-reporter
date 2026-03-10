@@ -145,12 +145,17 @@ async function preCallGuard(label = 'request') {
 // ─────────────────────────────────────────────────────────────────────────────
 function enqueue(label, fn) {
   console.log(`[GitHub] Queueing request: ${label}`);
-  const task = queueTail.then(() => fn()).catch(err => {
+  // Note: we must keep the queue chain alive even when a task fails.
+  // We do that by chaining a NEW promise that re-throws after the catch,
+  // so the CALLER sees the error but the queue itself is not broken.
+  let resolveTask, rejectTask;
+  const task = new Promise((res, rej) => { resolveTask = res; rejectTask = rej; });
+
+  queueTail = queueTail.then(() => fn()).then(resolveTask).catch(err => {
     console.error(`[GitHub] Queue error (${label}): ${err.message}`);
-    // Return undefined instead of re-throwing — isolates failure
-    // so the next queued task can still execute.
+    rejectTask(err); // propagate to caller (e.g. article-stager)
   });
-  queueTail = task;
+
   return task;
 }
 
@@ -298,13 +303,13 @@ async function pushFile(filePath, content, commitMessage) {
       }
     }
 
+    // Single preCallGuard — removed duplicate that was inside withBackoff
     await preCallGuard(`pushFile(${filePath})`);
 
     const encoded = Buffer.from(content, 'utf8').toString('base64');
     const sha = await getFileSha(filePath);
 
     await withBackoff(async () => {
-      await preCallGuard(`createOrUpdateFile(${filePath})`);
       const { data } = await getClient().repos.createOrUpdateFileContents({
         owner, repo,
         path: filePath,
