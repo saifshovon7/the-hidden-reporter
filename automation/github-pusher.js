@@ -6,7 +6,7 @@
  */
 
 const { Octokit } = require('@octokit/rest');
-const { config }  = require('./config');
+const { config } = require('./config');
 
 let octokit;
 
@@ -32,18 +32,18 @@ async function getFileSha(path) {
 
 // ── Push a single file ────────────────────────────────────────────────────────
 async function pushFile(filePath, content, commitMessage) {
-  const client  = getClient();
+  const client = getClient();
   const encoded = Buffer.from(content, 'utf8').toString('base64');
-  const sha     = await getFileSha(filePath);
+  const sha = await getFileSha(filePath);
 
   try {
     await client.repos.createOrUpdateFileContents({
       owner,
       repo,
-      path:    filePath,
+      path: filePath,
       message: commitMessage || `chore: update ${filePath}`,
       content: encoded,
-      sha:     sha || undefined,
+      sha: sha || undefined,
       branch,
     });
     console.log(`[GitHub] Pushed: ${filePath}`);
@@ -59,27 +59,75 @@ async function pushFiles(files, commitMessage) {
 
   const client = getClient();
 
-  // Get the latest commit SHA for the branch
-  const { data: refData } = await client.git.getRef({ owner, repo, ref: `heads/${branch}` });
-  const latestCommitSha   = refData.object.sha;
+  let latestCommitSha;
+  let baseTreeSha;
 
-  // Get the tree SHA of the latest commit
-  const { data: commitData } = await client.git.getCommit({ owner, repo, commit_sha: latestCommitSha });
-  const baseTreeSha          = commitData.tree.sha;
+  // Try to get the latest commit SHA for the branch.
+  // If the repo is empty (branch doesn't exist yet), bootstrap it.
+  try {
+    const { data: refData } = await client.git.getRef({ owner, repo, ref: `heads/${branch}` });
+    latestCommitSha = refData.object.sha;
+
+    const { data: commitData } = await client.git.getCommit({ owner, repo, commit_sha: latestCommitSha });
+    baseTreeSha = commitData.tree.sha;
+  } catch (err) {
+    if (err.status !== 404) throw err;
+
+    // ── Empty repository: create a root commit to bootstrap the branch ──
+    console.log(`[GitHub] Branch '${branch}' not found. Bootstrapping empty repository...`);
+
+    // Create an initial README blob
+    const { data: readmeBlob } = await client.git.createBlob({
+      owner, repo,
+      content: Buffer.from('# The Hidden Reporter\n\nAutomated news publishing.\n', 'utf8').toString('base64'),
+      encoding: 'base64',
+    });
+
+    // Create a root tree with the README
+    const { data: rootTree } = await client.git.createTree({
+      owner, repo,
+      tree: [{
+        path: 'README.md',
+        mode: '100644',
+        type: 'blob',
+        sha: readmeBlob.sha,
+      }],
+    });
+
+    // Create the initial (root) commit — no parents
+    const { data: rootCommit } = await client.git.createCommit({
+      owner, repo,
+      message: 'chore: initial commit',
+      tree: rootTree.sha,
+      parents: [],
+    });
+
+    // Create the branch reference pointing to the root commit
+    await client.git.createRef({
+      owner, repo,
+      ref: `refs/heads/${branch}`,
+      sha: rootCommit.sha,
+    });
+
+    console.log(`[GitHub] Branch '${branch}' created at ${rootCommit.sha.slice(0, 8)}.`);
+
+    latestCommitSha = rootCommit.sha;
+    baseTreeSha = rootTree.sha;
+  }
 
   // Create blobs for each file
   const treeItems = await Promise.all(
     files.map(async ({ path: filePath, content }) => {
       const { data: blob } = await client.git.createBlob({
         owner, repo,
-        content:  Buffer.from(content, 'utf8').toString('base64'),
+        content: Buffer.from(content, 'utf8').toString('base64'),
         encoding: 'base64',
       });
       return {
         path: filePath,
         mode: '100644',
         type: 'blob',
-        sha:  blob.sha,
+        sha: blob.sha,
       };
     })
   );
@@ -88,22 +136,22 @@ async function pushFiles(files, commitMessage) {
   const { data: newTree } = await client.git.createTree({
     owner, repo,
     base_tree: baseTreeSha,
-    tree:      treeItems,
+    tree: treeItems,
   });
 
   // Create commit
   const { data: newCommit } = await client.git.createCommit({
     owner, repo,
     message: commitMessage || 'chore: automated content update',
-    tree:    newTree.sha,
+    tree: newTree.sha,
     parents: [latestCommitSha],
   });
 
   // Update branch reference
   await client.git.updateRef({
     owner, repo,
-    ref:  `heads/${branch}`,
-    sha:  newCommit.sha,
+    ref: `heads/${branch}`,
+    sha: newCommit.sha,
     force: false,
   });
 
