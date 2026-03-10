@@ -8,7 +8,7 @@
  */
 
 const { createClient } = require('@supabase/supabase-js');
-const natural  = require('natural');
+const natural = require('natural');
 const { config } = require('./config');
 
 const supabase = createClient(config.supabase.url, config.supabase.serviceKey);
@@ -96,7 +96,12 @@ async function isContentDuplicate(content) {
 }
 
 // ── Main duplicate check ──────────────────────────────────────────────────────
-async function isDuplicate(sourceUrl, title, content) {
+// Two checks are sufficient:
+//   1. Exact source URL (covers same article from same source)
+//   2. Title similarity ≥ 92% Jaro-Winkler (covers same story reposted under slightly different headline)
+// Content fingerprint via ILIKE was removed — it performed a full table scan
+// on the TEXT content column, creating O(n) DB cost per article processed.
+async function isDuplicate(sourceUrl, title) {
   // Check 1: Exact URL
   if (await isUrlDuplicate(sourceUrl)) {
     console.log(`[DuplicateDetector] URL duplicate: ${sourceUrl}`);
@@ -106,14 +111,6 @@ async function isDuplicate(sourceUrl, title, content) {
   // Check 2: Title similarity
   if (await isTitleDuplicate(title)) {
     return true;
-  }
-
-  // Check 3: Content fingerprint (optional, skip if content is short)
-  if (content && content.length > 300) {
-    if (await isContentDuplicate(content)) {
-      console.log('[DuplicateDetector] Content duplicate detected.');
-      return true;
-    }
   }
 
   return false;
