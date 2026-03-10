@@ -54,6 +54,7 @@ const config = {
     // Daily target per category to prevent starvation
     categoryTargets: {
       technology: 6,
+      business: 4,
       finance: 4,
       sports: 4,
       science: 3,
