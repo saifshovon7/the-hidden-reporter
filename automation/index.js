@@ -23,7 +23,7 @@ const { publishArticle, getTodayCount, rebuildAll } = require('./publisher');
 const { updateTrending } = require('./trending-detector');
 const { runCleanup } = require('./cleanup');
 const { generateSitemap } = require('./sitemap-generator');
-const { pushFile, validateGitHub } = require('./github-pusher');
+const { pushFile, validateGitHub, logSessionStats } = require('./github-pusher');
 
 // ── Validate config on startup ────────────────────────────────────────────────
 validate();
@@ -134,6 +134,7 @@ async function runPipeline() {
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     console.log(`\n[Pipeline] Run complete. Published: ${published}. Time: ${elapsed}s.`);
+    logSessionStats();
 
   } catch (err) {
     console.error('[Pipeline] Fatal error:', err.message, err.stack);
