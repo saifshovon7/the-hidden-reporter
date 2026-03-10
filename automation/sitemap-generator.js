@@ -7,8 +7,8 @@
 const { createClient } = require('@supabase/supabase-js');
 const { config } = require('./config');
 
-const supabase  = createClient(config.supabase.url, config.supabase.serviceKey);
-const SITE_URL  = config.site.url;
+const supabase = createClient(config.supabase.url, config.supabase.serviceKey);
+const SITE_URL = config.site.url;
 
 function xmlEscape(str) {
   return (str || '').replace(/&/g, '&amp;').replace(/'/g, '&apos;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -30,11 +30,11 @@ async function generateSitemap() {
 
   // Static pages
   const staticEntries = [
-    urlEntry(`${SITE_URL}/`,                       now, 'hourly',  '1.0'),
-    urlEntry(`${SITE_URL}/search.html`,            now, 'monthly', '0.3'),
-    urlEntry(`${SITE_URL}/about.html`,             now, 'monthly', '0.4'),
-    urlEntry(`${SITE_URL}/contact.html`,           now, 'monthly', '0.3'),
-    urlEntry(`${SITE_URL}/editorial-policy.html`,  now, 'monthly', '0.3'),
+    urlEntry(`${SITE_URL}/`, now, 'hourly', '1.0'),
+    urlEntry(`${SITE_URL}/search.html`, now, 'monthly', '0.3'),
+    urlEntry(`${SITE_URL}/about.html`, now, 'monthly', '0.4'),
+    urlEntry(`${SITE_URL}/contact.html`, now, 'monthly', '0.3'),
+    urlEntry(`${SITE_URL}/editorial-policy.html`, now, 'monthly', '0.3'),
   ];
 
   // Category pages
@@ -64,8 +64,11 @@ async function generateSitemap() {
   if (error) console.error('[Sitemap] Error fetching articles:', error.message);
 
   const articleEntries = (articles || []).map(a => {
-    const date = new Date(a.updated_at || a.publish_date).toISOString().split('T')[0];
-    const cat  = a.category || 'general';
+    // updated_at is only set by DB trigger (UPDATE rows), so it may be null
+    // for articles that were never updated. Fall back to publish_date.
+    const rawDate = a.updated_at || a.publish_date;
+    const date = rawDate ? new Date(rawDate).toISOString().split('T')[0] : now;
+    const cat = a.category || 'general';
     return urlEntry(`${SITE_URL}/articles/${cat}/${a.slug}.html`, date, 'never', '0.7');
   });
 
