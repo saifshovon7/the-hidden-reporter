@@ -245,27 +245,12 @@ async function publishArticle(extractedData, rewrittenData) {
     author: extractedData.sourceAuthor,
   });
 
-  // ── Download featured image locally ─────────────────────────────────────
-  let featuredImageUrl = extractedData.featuredImageUrl || null;
-  let featuredImageCredit = extractedData.featuredImageCredit || extractedData.domain;
-  const imageFiles = [];
-
-  if (featuredImageUrl) {
-    try {
-      const imgResult = await downloadImage(featuredImageUrl, seo.slug);
-      if (imgResult) {
-        // Use local image path in article HTML, add binary file to batch
-        featuredImageUrl = imgResult.localUrl;
-        imageFiles.push({
-          path: imgResult.localPath,
-          content: imgResult.content,
-          encoding: 'base64', // Signal to pushFiles that this is binary
-        });
-      }
-    } catch (err) {
-      console.warn(`[Publisher] Image download failed, using original URL: ${err.message}`);
-    }
-  }
+  // ── Use external featured image URL directly ───────────────────────────
+  // We use the original og:image URL from the source site instead of
+  // downloading and re-hosting images. This is simpler and more reliable.
+  const featuredImageUrl = extractedData.featuredImageUrl || null;
+  const featuredImageCredit = extractedData.featuredImageCredit || extractedData.domain;
+  const imageFiles = []; // kept for compatibility — no binary images staged
 
   // Build article record
   const articleRecord = {
