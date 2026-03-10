@@ -73,8 +73,14 @@ function footerPartial(footerAdHtml = '') {
 
 // ── Base HTML wrapper ─────────────────────────────────────────────────────────
 function baseHtml({ title, meta, schema, og, body, activeCat = '', footerAd = '', canonicalPath = '/' }) {
+  // Supabase public config — anon key is intentionally public (protected by RLS)
+  // Stored in inline JS instead of HTML attributes to avoid scraper confusion
+  const supabaseConfig = (config.supabase.url && config.supabase.anonKey)
+    ? `<script>window.__THR__={supabaseUrl:${JSON.stringify(config.supabase.url)},supabaseKey:${JSON.stringify(config.supabase.anonKey)}};</script>`
+    : '';
+
   return `<!DOCTYPE html>
-<html lang="en" data-supabase-url="${config.supabase.url}" data-supabase-key="${config.supabase.anonKey}">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -87,6 +93,7 @@ function baseHtml({ title, meta, schema, og, body, activeCat = '', footerAd = ''
   <link rel="stylesheet" href="/css/style.css">
   <link rel="alternate" type="application/rss+xml" title="${SITE_NAME}" href="/feed.xml">
   <link rel="canonical" href="${SITE_URL}${canonicalPath || '/'}">
+  ${supabaseConfig}
   ${schema ? `<script type="application/ld+json">${schema}</script>` : ''}
 </head>
 <body>
@@ -180,7 +187,7 @@ function generateArticlePage(article, related = [], sidebarAd = '', inArticleAd 
 
   const body = `
   <div class="layout-article">
-    <article class="article-main" itemscope itemtype="https://schema.org/NewsArticle">
+    <article class="article-main" itemscope itemtype="https://schema.org/NewsArticle" data-slug="${escapeAttr(article.slug)}">
       <header class="article-header">
         <a href="/category/${article.category}.html" class="article-category">${capitalize(article.category)}</a>
         <h1 class="article-title" itemprop="headline">${escapeHtml(article.title)}</h1>
@@ -432,6 +439,7 @@ function generateSearchIndex(articles) {
       summary: (a.summary || '').slice(0, 200),
       category: a.category,
       publish_date: a.publish_date,
+      view_count: a.view_count || 0,
       source: a.source_name,
       image: sanitizeImageUrl(a.featured_image_url) || null,
       url: articlePath(a.category, a.slug),
