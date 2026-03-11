@@ -60,6 +60,8 @@ CREATE TABLE IF NOT EXISTS articles (
   summary             TEXT,
   source_name         TEXT NOT NULL,
   source_url          TEXT NOT NULL UNIQUE,
+  source_publish_date TIMESTAMPTZ,
+  site_publish_date   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   publish_date        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   view_count          INTEGER NOT NULL DEFAULT 0,
   trend_score         NUMERIC(10, 4) NOT NULL DEFAULT 0,
