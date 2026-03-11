@@ -39,9 +39,18 @@ const config = {
   newsApi: {
     key: process.env.NEWS_API_KEY || '',
     enabled: Boolean(process.env.NEWS_API_KEY),
+    country: process.env.NEWS_API_COUNTRY || 'us',
   },
   gdelt: {
     enabled: process.env.USE_GDELT === 'true',
+  },
+  contextualWeb: {
+    apiKey: process.env.CONTEXTUAL_WEB_API_KEY || '',
+    enabled: Boolean(process.env.CONTEXTUAL_WEB_API_KEY),
+    country: process.env.CONTEXTUAL_WEB_COUNTRY || 'us',
+  },
+  googleNews: {
+    enabled: process.env.USE_GOOGLE_NEWS_SCRAPER === 'true',
   },
 
   // ── Publishing ────────────────────────────────────────────
