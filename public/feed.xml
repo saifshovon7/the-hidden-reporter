@@ -5,7 +5,7 @@
     <link>https://the-hidden-reporter.pages.dev</link>
     <description>Uncovering stories behind the headlines.</description>
     <language>en-us</language>
-    <lastBuildDate>Wed, 11 Mar 2026 11:03:46 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 11 Mar 2026 11:06:01 GMT</lastBuildDate>
     <atom:link href="https://the-hidden-reporter.pages.dev/feed.xml" rel="self" type="application/rss+xml"/>
   <item>
     <title><![CDATA[Mortgage Rates Surge Amid Iran War Uncertainty]]></title>
@@ -80,6 +80,14 @@
     <category>technology</category>
   </item>
   <item>
+    <title><![CDATA[Signal Issues Warning After Hackers Target Officials and Users]]></title>
+    <link>https://the-hidden-reporter.pages.dev/articles/technology/signal-issues-warning-after-hackers-target-officials-and-users-mmlxnb9a.html</link>
+    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/signal-issues-warning-after-hackers-target-officials-and-users-mmlxnb9a.html</guid>
+    <description><![CDATA[Signal has issued a warning to users after hackers targeted high-profile users, including officials and journalists, in a Russian-backed campaign. The company advises users to be vigilant against scams and not to share sensitive information.]]></description>
+    <pubDate>Tue, 10 Mar 2026 17:35:25 GMT</pubDate>
+    <category>technology</category>
+  </item>
+  <item>
     <title><![CDATA[Tumbler Ridge Shooting: Family Sues OpenAI Over Alleged Failure to Warn Authorities]]></title>
     <link>https://the-hidden-reporter.pages.dev/articles/technology/tumbler-ridge-shooting-family-sues-openai-over-alleged-failure-to-warn-authoriti-mmlobjbi.html</link>
     <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/tumbler-ridge-shooting-family-sues-openai-over-alleged-failure-to-warn-authoriti-mmlobjbi.html</guid>
@@ -94,6 +102,22 @@
     <description><![CDATA[The Federal Aviation Administration briefly grounded all JetBlue flights due to a system outage, which was resolved within 40 minutes. The airline did not provide further information on the cause of the outage.]]></description>
     <pubDate>Tue, 10 Mar 2026 05:47:39 GMT</pubDate>
     <category>business</category>
+  </item>
+  <item>
+    <title><![CDATA[GPS Jamming Threatens Middle East Maritime Navigation]]></title>
+    <link>https://the-hidden-reporter.pages.dev/articles/technology/gps-jamming-threatens-middle-east-maritime-navigation-mmlxn3ps.html</link>
+    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/gps-jamming-threatens-middle-east-maritime-navigation-mmlxn3ps.html</guid>
+    <description><![CDATA[GPS jamming in the Middle East is causing concern for maritime navigation, with hundreds of ships mysteriously clustered in the wrong locations in waters off Iran, the UAE, and Qatar.]]></description>
+    <pubDate>Tue, 10 Mar 2026 00:01:38 GMT</pubDate>
+    <category>technology</category>
+  </item>
+  <item>
+    <title><![CDATA[Anthropic Sues US Government Over 'Supply Chain Risk' Label]]></title>
+    <link>https://the-hidden-reporter.pages.dev/articles/technology/anthropic-sues-us-government-over-supply-chain-risk-label-mmlxngu0.html</link>
+    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/anthropic-sues-us-government-over-supply-chain-risk-label-mmlxngu0.html</guid>
+    <description><![CDATA[Anthropic, an AI firm, sues the US government over claims it is a 'supply chain risk' and alleges the government's actions were 'unprecedented and unlawful'.]]></description>
+    <pubDate>Mon, 09 Mar 2026 21:33:05 GMT</pubDate>
+    <category>technology</category>
   </item>
   </channel>
 </rss>
