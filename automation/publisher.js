@@ -19,6 +19,20 @@ const { getTopTrending } = require('./trending-detector');
 const { stageFiles, flush, getPendingCount } = require('./article-stager');
 const { downloadImage } = require('./image-handler');
 
+// ── Push a single image file to GitHub immediately (isolated from article batch)
+async function commitImageFile(downloaded) {
+  try {
+    await pushFiles(
+      [{ path: downloaded.localPath, content: downloaded.content, encoding: 'base64' }],
+      `chore: add article image ${downloaded.localPath}`
+    );
+    return true;
+  } catch (err) {
+    console.warn(`[Publisher] Image commit failed: ${err.message}`);
+    return false;
+  }
+}
+
 const supabase = createClient(config.supabase.url, config.supabase.serviceKey);
 
 // ── Count today's published articles ─────────────────────────────────────────
@@ -246,27 +260,24 @@ async function publishArticle(extractedData, rewrittenData) {
   });
 
   // ── Download featured image and self-host on GitHub / Cloudflare Pages ──
-  // Downloading ensures images never expire (no hotlink protection issues).
-  // Falls back to the original external URL if the download fails.
+  // Image is committed to GitHub BEFORE the article is saved so the DB always
+  // references a URL that actually exists. Falls back to external URL on failure.
   let featuredImageUrl = extractedData.featuredImageUrl || null;
   const featuredImageCredit = extractedData.featuredImageCredit || extractedData.domain;
-  const imageFiles = [];
 
   if (featuredImageUrl) {
     try {
       const downloaded = await downloadImage(featuredImageUrl, seo.slug);
       if (downloaded) {
-        // Use the self-hosted local path (e.g. /images/articles/slug.jpg)
-        featuredImageUrl = downloaded.localUrl;
-        // Queue the binary image for the batch GitHub commit
-        imageFiles.push({
-          path: downloaded.localPath,
-          content: downloaded.content,
-          encoding: 'base64',
-        });
-        console.log(`[Publisher] Image self-hosted: ${downloaded.localUrl}`);
+        const committed = await commitImageFile(downloaded);
+        if (committed) {
+          featuredImageUrl = downloaded.localUrl;
+          console.log(`[Publisher] Image self-hosted: ${downloaded.localUrl}`);
+        } else {
+          console.log('[Publisher] Image commit failed — keeping external URL.');
+        }
       } else {
-        console.log(`[Publisher] Image download failed — falling back to external URL.`);
+        console.log('[Publisher] Image download returned null — using external URL.');
       }
     } catch (err) {
       console.warn(`[Publisher] Image download error: ${err.message} — using external URL.`);
@@ -338,6 +349,7 @@ async function publishArticle(extractedData, rewrittenData) {
   }
 
   // ── Stage all files for batch commit ────────────────────────────────────
+  // Note: image files are committed immediately above (see commitImageFile).
   const filesToStage = [
     { path: `public/articles/${savedArticle.category}/${savedArticle.slug}.html`, content: articleHtml },
     { path: 'public/search-index.json', content: searchIndex },
@@ -345,7 +357,6 @@ async function publishArticle(extractedData, rewrittenData) {
     { path: 'public/index.html', content: homepageHtml },
     ...categoryFiles,
     ...topicFiles,
-    ...imageFiles,
   ];
 
   // Stage files (auto-flushes when batch threshold is reached)
@@ -432,9 +443,88 @@ async function rebuildArticleFiles() {
   return files;
 }
 
-// ── Startup rebuild ───────────────────────────────────────────────────────────
+// ── Rebuild missing self-hosted images ────────────────────────────────────────────────────
+// Re-downloads and commits images for articles that reference /images/articles/
+// paths which are missing from GitHub. Run on startup to heal any past failures.
+async function rebuildImages() {
+  console.log('[Publisher] Checking for missing self-hosted images...');
+  const axios = require('axios');
+  const cheerio = require('cheerio');
+
+  const { data: articles, error } = await supabase
+    .from('articles')
+    .select('id, slug, source_url, featured_image_url')
+    .like('featured_image_url', '/images/articles/%')
+    .order('publish_date', { ascending: false })
+    .limit(200);
+
+  if (error) {
+    console.error(`[Publisher] rebuildImages DB error: ${error.message}`);
+    return;
+  }
+  if (!articles?.length) {
+    console.log('[Publisher] No self-hosted image articles found.');
+    return;
+  }
+
+  console.log(`[Publisher] Found ${articles.length} articles with self-hosted images to commit.`);
+  let committed = 0;
+  let failed = 0;
+
+  for (const article of articles) {
+    if (!article.source_url) { failed++; continue; }
+    try {
+      // Fetch og:image from the original source page
+      let sourceImageUrl = null;
+      try {
+        const res = await axios.get(article.source_url, {
+          timeout: 15000,
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36' },
+          validateStatus: s => s < 500,
+        });
+        if (res.status < 400 && typeof res.data === 'string') {
+          const $ = cheerio.load(res.data);
+          sourceImageUrl =
+            $('meta[property="og:image"]').attr('content') ||
+            $('meta[name="twitter:image"]').attr('content') || null;
+        }
+      } catch (_) { /* page unreachable */ }
+
+      if (!sourceImageUrl) {
+        console.log(`[Publisher] rebuildImages: no source image for ${article.slug}`);
+        failed++;
+        continue;
+      }
+
+      // Extract the slug from the stored local path
+      const m = article.featured_image_url.match(/\/images\/articles\/(.+)\.[a-z]+$/i);
+      const imageSlug = m ? m[1] : article.slug;
+
+      const downloaded = await downloadImage(sourceImageUrl, imageSlug);
+      if (!downloaded) { failed++; continue; }
+
+      const ok = await commitImageFile(downloaded);
+      if (ok) {
+        committed++;
+        console.log(`[Publisher] rebuildImages: committed ${downloaded.localPath} (${committed}/${articles.length})`);
+      } else {
+        failed++;
+      }
+
+      // Pause between commits to respect rate limits
+      await new Promise(r => setTimeout(r, 2000));
+    } catch (err) {
+      console.warn(`[Publisher] rebuildImages error for ${article.slug}: ${err.message}`);
+      failed++;
+    }
+  }
+
+  console.log(`[Publisher] rebuildImages done: ${committed} committed, ${failed} failed/skipped.`);
+}
+
+// ── Startup rebuild ───────────────────────────────────────────────────────────────────────
 // Runs once on service start. Pushes all article HTML files, search-index.json,
-// category pages, and RSS feed from ALL existing Supabase articles.
+// category pages, RSS feed, and any missing self-hosted images.
 async function rebuildAll() {
   console.log('[Publisher] Running startup rebuild...');
   try {
@@ -466,4 +556,4 @@ async function rebuildAll() {
   }
 }
 
-module.exports = { publishArticle, getTodayCount, getTodayCategoryStats, rebuildAll, flushStagedArticles };
+module.exports = { publishArticle, getTodayCount, getTodayCategoryStats, rebuildAll, rebuildImages, flushStagedArticles };

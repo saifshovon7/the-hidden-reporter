@@ -83,9 +83,12 @@ const { owner, repo, branch } = config.github;
 // ─────────────────────────────────────────────────────────────────────────────
 // ⑧ — Git blob SHA helper (compute locally, no API call)
 //    Git blob SHA = SHA1("blob <byteLength>\0<content>")
+//    Pass a Buffer for binary files, or a string for UTF-8 text.
 // ─────────────────────────────────────────────────────────────────────────────
 function gitBlobSha(content) {
-  const buf = Buffer.from(content, 'utf8');
+  const buf = Buffer.isBuffer(content)
+    ? content
+    : Buffer.from(content, 'utf8');
   const header = `blob ${buf.length}\0`;
   return crypto
     .createHash('sha1')
@@ -416,11 +419,11 @@ async function pushFiles(files, commitMessage) {
     for (const file of files) {
       const cachedSha = fileShaCache.get(file.path);
       if (cachedSha) {
-        // For base64-encoded binary files, decode before computing SHA
-        const rawContent = file.encoding === 'base64'
-          ? Buffer.from(file.content, 'base64').toString('binary')
-          : file.content;
-        const localSha = gitBlobSha(rawContent);
+        // For base64-encoded binary files, decode to Buffer before hashing
+        const rawBuf = file.encoding === 'base64'
+          ? Buffer.from(file.content, 'base64')
+          : Buffer.from(file.content, 'utf8');
+        const localSha = gitBlobSha(rawBuf);
         if (localSha === cachedSha) {
           console.log(`[GitHub] Skipping unchanged: ${file.path}`);
           sessionSkipped++;
