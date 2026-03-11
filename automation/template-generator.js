@@ -287,10 +287,24 @@ function generateRelatedArticles(articles) {
 </section>`;
 }
 
+// ── Between-articles ad injector ──────────────────────────────────────────────
+// Inserts an ad block after every `everyN` cards in a list.
+function injectBetweenArticles(articles, size, adHtml, everyN = 4) {
+  if (!adHtml) return articles.map(a => generateArticleCard(a, size)).join('\n');
+  const adBlock = `<div class="between-articles-ad" aria-label="Advertisement">${adHtml}</div>`;
+  return articles.map((a, i) => {
+    const card = generateArticleCard(a, size);
+    if ((i + 1) % everyN === 0 && i < articles.length - 1) {
+      return card + '\n' + adBlock;
+    }
+    return card;
+  }).join('\n');
+}
+
 // ── Category page ─────────────────────────────────────────────────────────────
-function generateCategoryPage(category, articles, sidebarAd = '', footerAd = '') {
+function generateCategoryPage(category, articles, sidebarAd = '', footerAd = '', betweenArticlesAd = '') {
   const displayName = capitalize(category);
-  const cardHtml = articles.map(a => generateArticleCard(a, 'medium')).join('\n');
+  const cardHtml = injectBetweenArticles(articles, 'medium', betweenArticlesAd);
 
   const body = `
   <div class="layout-default">
@@ -354,8 +368,9 @@ function generateHomepage(data) {
     `<a href="/topic/${encodeURIComponent(t.topic)}.html" class="trending-tag">#${escapeHtml(t.topic)}</a>`
   ).join('\n');
 
-  // Latest section
-  const latestHtml = (latest || []).slice(0, 12).map(a => generateArticleCard(a, 'small')).join('\n');
+  // Latest section — inject between-articles ad every 4 items
+  const latestList = (latest || []).slice(0, 12);
+  const latestHtml = injectBetweenArticles(latestList, 'small', data.betweenArticlesAd || '');
 
   // Category sections
   const categorySectionsHtml = Object.entries(byCategory || {}).map(([cat, articles]) => {

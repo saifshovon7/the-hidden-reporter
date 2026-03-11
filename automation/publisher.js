@@ -88,7 +88,7 @@ async function getAds() {
     .select('position, content')
     .eq('active', true);
 
-  const ads = { sidebar: '', 'in-article': '', footer: '' };
+  const ads = { sidebar: '', 'in-article': '', footer: '', 'between-articles': '' };
   for (const ad of (data || [])) {
     ads[ad.position] = ad.content;
   }
@@ -189,6 +189,7 @@ async function buildHomepage(ads) {
     byCategory,
     sidebarAd: ads.sidebar,
     footerAd: ads.footer,
+    betweenArticlesAd: ads['between-articles'],
     popularArticles: popular || [],
   });
 }
@@ -204,7 +205,7 @@ async function buildCategoryPages(ads) {
       .order('publish_date', { ascending: false })
       .limit(30);
 
-    const html = generateCategoryPage(cat, articles || [], ads.sidebar, ads.footer);
+    const html = generateCategoryPage(cat, articles || [], ads.sidebar, ads.footer, ads['between-articles']);
     files.push({ path: `public/category/${cat}.html`, content: html });
   }
   return files;
