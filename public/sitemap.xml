@@ -79,6 +79,24 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://the-hidden-reporter.pages.dev/topic/richard%20kahn.html</loc>
+    <lastmod>2026-03-11</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/topic/darren%20indyke.html</loc>
+    <lastmod>2026-03-11</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/topic/jeffrey%20epstein.html</loc>
+    <lastmod>2026-03-11</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://the-hidden-reporter.pages.dev/topic/meta.html</loc>
     <lastmod>2026-03-11</lastmod>
     <changefreq>daily</changefreq>
@@ -97,6 +115,12 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://the-hidden-reporter.pages.dev/topic/spotify.html</loc>
+    <lastmod>2026-03-11</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://the-hidden-reporter.pages.dev/topic/ai.html</loc>
     <lastmod>2026-03-11</lastmod>
     <changefreq>daily</changefreq>
@@ -104,6 +128,12 @@
   </url>
   <url>
     <loc>https://the-hidden-reporter.pages.dev/topic/hereditary%20peers.html</loc>
+    <lastmod>2026-03-11</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/topic/exploding%20parcels.html</loc>
     <lastmod>2026-03-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -122,6 +152,12 @@
   </url>
   <url>
     <loc>https://the-hidden-reporter.pages.dev/topic/public%20disorder.html</loc>
+    <lastmod>2026-03-11</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/topic/music%20trends.html</loc>
     <lastmod>2026-03-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -181,31 +217,25 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://the-hidden-reporter.pages.dev/topic/richard%20kahn.html</loc>
-    <lastmod>2026-03-11</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://the-hidden-reporter.pages.dev/topic/darren%20indyke.html</loc>
-    <lastmod>2026-03-11</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://the-hidden-reporter.pages.dev/topic/jeffrey%20epstein.html</loc>
-    <lastmod>2026-03-11</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://the-hidden-reporter.pages.dev/articles/general/mortgage-rates-surge-amid-iran-war-uncertainty-mmlxclz7.html</loc>
     <lastmod>2026-03-11</lastmod>
     <changefreq>never</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://the-hidden-reporter.pages.dev/articles/general/global-music-trends-english-no-longer-dominant-in-charts-says-spotify-mmlz2xk4.html</loc>
+    <lastmod>2026-03-11</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://the-hidden-reporter.pages.dev/articles/general/uk-government-to-publish-mandelson-documents-on-wednesday-mmlxhnf0.html</loc>
+    <lastmod>2026-03-11</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/articles/general/russian-courier-speaks-out-on-exploding-parcels-plot-against-uk-mmly4vsk.html</loc>
     <lastmod>2026-03-11</lastmod>
     <changefreq>never</changefreq>
     <priority>0.7</priority>
@@ -314,6 +344,18 @@
   </url>
   <url>
     <loc>https://the-hidden-reporter.pages.dev/articles/technology/london-transport-hack-exposed-10-million-peoples-data-bbc-investigation-finds-mmlxwsnu.html</loc>
+    <lastmod>2026-03-11</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/articles/technology/musk-defends-social-media-posts-in-california-trial-mmly3g0d.html</loc>
+    <lastmod>2026-03-11</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://the-hidden-reporter.pages.dev/articles/technology/online-privacy-a-luxury-not-a-right-mmlypxjw.html</loc>
     <lastmod>2026-03-11</lastmod>
     <changefreq>never</changefreq>
     <priority>0.7</priority>
