@@ -12,33 +12,42 @@ CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 CREATE TABLE IF NOT EXISTS sources (
   id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   source_name  TEXT NOT NULL,
-  rss_url      TEXT NOT NULL UNIQUE,
+  rss_url      TEXT,
+  api_url      TEXT,
+  source_type  TEXT NOT NULL DEFAULT 'rss',
+  website_url  TEXT,
   category     TEXT NOT NULL DEFAULT 'general',
   active       BOOLEAN NOT NULL DEFAULT true,
+  priority     INTEGER NOT NULL DEFAULT 1,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_sources_active ON sources (active);
 CREATE INDEX idx_sources_category ON sources (category);
+CREATE INDEX idx_sources_type ON sources (source_type);
 
--- Seed default sources
-INSERT INTO sources (source_name, rss_url, category, active) VALUES
-  ('Google News – Top Stories',    'https://news.google.com/rss',                                         'general',    true),
-  ('Google News – Technology',     'https://news.google.com/rss/search?q=technology',                    'technology', true),
-  ('Google News – AI',             'https://news.google.com/rss/search?q=artificial+intelligence',       'technology', true),
-  ('Google News – Business',       'https://news.google.com/rss/search?q=business',                      'business',   true),
-  ('Google News – Science',        'https://news.google.com/rss/search?q=science',                       'science',    true),
-  ('Google News – World',          'https://news.google.com/rss/search?q=world+news',                    'world',      true),
-  ('Google News – Politics',       'https://news.google.com/rss/search?q=politics',                      'politics',   true),
-  ('Google News – Finance',        'https://news.google.com/rss/search?q=finance',                       'finance',    true),
-  ('Google News – Sports',         'https://news.google.com/rss/search?q=sports',                        'sports',     true),
-  ('BBC News',                     'http://feeds.bbci.co.uk/news/rss.xml',                               'general',    true),
-  ('BBC Technology',               'http://feeds.bbci.co.uk/news/technology/rss.xml',                    'technology', true),
-  ('Reuters',                      'https://feeds.reuters.com/reuters/topNews',                           'general',    true),
-  ('TechCrunch',                   'https://techcrunch.com/feed/',                                        'technology', true),
-  ('The Verge',                    'https://www.theverge.com/rss/index.xml',                              'technology', true),
-  ('Bloomberg Technology',         'https://feeds.bloomberg.com/technology/news.rss',                    'technology', false)
-ON CONFLICT (rss_url) DO NOTHING;
+-- Seed default RSS sources
+INSERT INTO sources (source_name, rss_url, source_type, category, active, priority) VALUES
+  ('Google News – Top Stories',    'https://news.google.com/rss',           'rss', 'general',    true,  10),
+  ('Google News – Technology',     'https://news.google.com/rss/search?q=technology',           'rss', 'technology', true,  10),
+  ('Google News – AI',             'https://news.google.com/rss/search?q=artificial+intelligence', 'rss', 'technology', true,  10),
+  ('Google News – Business',       'https://news.google.com/rss/search?q=business',              'rss', 'business',   true,  10),
+  ('Google News – Science',        'https://news.google.com/rss/search?q=science',               'rss', 'science',    true,  10),
+  ('Google News – World',          'https://news.google.com/rss/search?q=world+news',            'rss', 'world',      true,  10),
+  ('Google News – Politics',       'https://news.google.com/rss/search?q=politics',              'rss', 'politics',   true,  10),
+  ('Google News – Finance',        'https://news.google.com/rss/search?q=finance',               'rss', 'finance',    true,  10),
+  ('Google News – Sports',         'https://news.google.com/rss/search?q=sports',                'rss', 'sports',     true,  10),
+  ('BBC News',                    'http://feeds.bbci.co.uk/news/rss.xml',  'rss', 'general',    true,  8),
+  ('BBC Technology',              'http://feeds.bbci.co.uk/news/technology/rss.xml', 'rss', 'technology', true,  8),
+  ('Reuters',                     'https://feeds.reuters.com/reuters/topNews', 'rss', 'general',    true,  9),
+  ('TechCrunch',                  'https://techcrunch.com/feed/',          'rss', 'technology', true,  7),
+  ('The Verge',                   'https://www.theverge.com/rss/index.xml', 'rss', 'technology', true,  7),
+  ('Bloomberg Technology',        'https://feeds.bloomberg.com/technology/news.rss', 'rss', 'technology', false, 5),
+  ('NPR News',                    'https://feeds.npr.org/1001/rss.xml',     'rss', 'general',    true,  7),
+  ('CNN Top Stories',             'http://rss.cnn.com/rss/edition.rss',    'rss', 'general',    true,  6),
+  ('ESPN',                        'https://www.espn.com/espn/rss/news',   'rss', 'sports',     true,  7),
+  ('Science Daily',               'https://www.sciencedaily.com/rss/all.xml', 'rss', 'science',   true,  6)
+ON CONFLICT DO NOTHING;
 
 -- ============================================================
 -- TABLE: articles
@@ -215,3 +224,21 @@ BEGIN
   RETURN deleted_count;
 END;
 $$;
+
+-- ============================================================
+-- TABLE: source_stats (track API usage and performance)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS source_stats (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  source_name     TEXT NOT NULL,
+  source_type     TEXT NOT NULL,
+  category        TEXT NOT NULL DEFAULT 'general',
+  articles_fetched INTEGER NOT NULL DEFAULT 0,
+  articles_published INTEGER NOT NULL DEFAULT 0,
+  errors          INTEGER NOT NULL DEFAULT 0,
+  last_run        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_source_stats_name ON source_stats (source_name);
+CREATE INDEX idx_source_stats_date ON source_stats (last_run DESC);
