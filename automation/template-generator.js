@@ -172,9 +172,10 @@ function generateArticlePage(article, related = [], sidebarAd = '', inArticleAd 
       </figure>`
     : '';
 
-  const tagsHtml = (article.tags || []).map(tag =>
-    `<a href="/search.html?q=${encodeURIComponent(tag)}" class="trending-tag">${escapeHtml(tag)}</a>`
-  ).join(' ');
+  const tagsHtml = (article.tags || []).map(tag => {
+    const slug = tag.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    return `<a href="/topic/${slug}.html" class="trending-tag">${escapeHtml(tag)}</a>`;
+  }).join(' ');
 
   // Split content at midpoint for in-article ad
   const mid = Math.floor(article.content.length / 2);
@@ -364,9 +365,10 @@ function generateHomepage(data) {
   const sideHtml = (sideArticles || []).slice(0, 4).map(a => generateArticleCard(a, 'medium')).join('\n');
 
   // Trending topics bar
-  const trendingHtml = (trending || []).slice(0, 8).map(t =>
-    `<a href="/topic/${encodeURIComponent(t.topic)}.html" class="trending-tag">#${escapeHtml(t.topic)}</a>`
-  ).join('\n');
+  const trendingHtml = (trending || []).slice(0, 8).map(t => {
+    const slug = (t.topic || t.keyword || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    return `<a href="/topic/${encodeURIComponent(slug)}.html" class="trending-tag">#${escapeHtml(t.topic || t.keyword)}</a>`;
+  }).join('\n');
 
   // Latest section — inject between-articles ad every 4 items
   const latestList = (latest || []).slice(0, 12);
