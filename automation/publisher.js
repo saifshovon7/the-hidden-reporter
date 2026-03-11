@@ -336,16 +336,17 @@ async function publishArticle(extractedData, rewrittenData) {
   // Build topic pages for detected topics
   const topicFiles = [];
   for (const topic of seo.topics) {
+    const topicSlug = topic.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const { data: topicArticles } = await supabase
       .from('articles')
       .select('*')
-      .ilike('title', `%${topic}%`)
+      .or(`title.ilike.%${topic}%,summary.ilike.%${topic}%,tags.cs.{"${topic}"}`)
       .order('publish_date', { ascending: false })
       .limit(20);
 
     if (topicArticles?.length) {
       const html = generateTopicPage(topic, topicArticles, ads.footer);
-      topicFiles.push({ path: `public/topic/${topic}.html`, content: html });
+      topicFiles.push({ path: `public/topic/${topicSlug}.html`, content: html });
     }
   }
 
@@ -523,9 +524,64 @@ async function rebuildImages() {
   console.log(`[Publisher] rebuildImages done: ${committed} committed, ${failed} failed/skipped.`);
 }
 
+// ── Rebuild all topic pages from trending_topics ───────────────────────────────────────
+// Fetches all trending topics and generates a topic page for each with matching articles
+async function rebuildTopicPages() {
+  console.log('[Publisher] Rebuilding topic pages...');
+
+  const { data: topics, error } = await supabase
+    .from('trending_topics')
+    .select('topic, keyword, article_count')
+    .order('trend_score', { ascending: false })
+    .limit(20);
+
+  if (error) {
+    console.error('[Publisher] Error fetching trending topics:', error.message);
+    return [];
+  }
+
+  if (!topics?.length) {
+    console.log('[Publisher] No trending topics found.');
+    return [];
+  }
+
+  console.log(`[Publisher] Found ${topics.length} trending topics.`);
+  const ads = await getAds();
+  const topicFiles = [];
+
+  for (const topic of topics) {
+    const keyword = topic.keyword || topic.topic;
+
+    // matching Search articles the topic in title, summary, tags, or content
+    const { data: topicArticles } = await supabase
+      .from('articles')
+      .select('id, title, slug, summary, category, publish_date, source_name, featured_image_url, tags, content')
+      .or(`title.ilike.%${keyword}%,summary.ilike.%${keyword}%,tags.cs.{"${keyword}"}`)
+      .order('publish_date', { ascending: false })
+      .limit(20);
+
+    if (topicArticles?.length) {
+      console.log(`[Publisher] Topic "${keyword}": ${topicArticles.length} articles`);
+      const html = generateTopicPage(keyword, topicArticles, ads.footer);
+      // Create slug-safe filename
+      const slug = keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      topicFiles.push({ path: `public/topic/${slug}.html`, content: html });
+    }
+  }
+
+  if (topicFiles.length) {
+    await pushFiles(topicFiles, 'chore: rebuild topic pages');
+    console.log(`[Publisher] Topic pages pushed (${topicFiles.length} files).`);
+  } else {
+    console.log('[Publisher] No topic pages to generate.');
+  }
+
+  return topicFiles;
+}
+
 // ── Startup rebuild ───────────────────────────────────────────────────────────────────────
 // Runs once on service start. Pushes all article HTML files, search-index.json,
-// category pages, RSS feed, and any missing self-hosted images.
+// category pages, RSS feed, topic pages, and any missing self-hosted images.
 async function rebuildAll() {
   console.log('[Publisher] Running startup rebuild...');
   try {
@@ -550,6 +606,9 @@ async function rebuildAll() {
 
     // Rebuild all article HTML files to new /articles/{category}/ structure
     await rebuildArticleFiles();
+
+    // Rebuild all topic pages from trending_topics
+    await rebuildTopicPages();
 
     console.log('[Publisher] Startup rebuild complete.');
   } catch (err) {
