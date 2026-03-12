@@ -17,7 +17,8 @@ const { fetchAllSources } = require('./fetcher');
 const { extractArticle } = require('./extractor');
 const { rewriteArticle } = require('./ai-rewriter');
 const { isDuplicate } = require('./duplicate-detector');
-const { publishArticle, getTodayCount, getTodayCategoryStats } = require('./publisher');
+const { publishArticle, getTodayCount, getTodayCategoryStats, rebuildAll } = require('./publisher');
+const { flushStagedArticles } = require('./article-stager');
 
 const supabase = createClient(config.supabase.url, config.supabase.serviceKey);
 
@@ -26,6 +27,8 @@ let articleQueue = [];
 let isPublisherRunning = false;
 let isFetcherRunning = false;
 let lastPublishTime = null;
+let lastHomepageRebuild = null;
+let homepageRebuildPending = false;
 let todayPublishCount = 0;
 
 // ── BREAKING NEWS DETECTION ─────────────────────────────────────────────────
@@ -233,9 +236,15 @@ async function processQueueItem(forceImmediate = false) {
       todayPublishCount++;
       console.log(`[Queue] ✓ Published: "${savedArticle.title.slice(0, 50)}" ${item.isBreaking ? '[BREAKING]' : ''}`);
       
+      // Flush staged files to GitHub immediately
+      await flushStagedArticles();
+      
       // Mark as published and remove from queue
       articleQueue = articleQueue.filter(q => q.id !== item.id);
       lastPublishTime = new Date();
+      
+      // Trigger homepage rebuild after publish (async, don't wait)
+      triggerHomepageRebuild();
     }
     
     return true;
@@ -328,6 +337,35 @@ function getQueueStatus() {
     maxPerDay: config.publishing.maxPerDay,
     nextPublishTime: nextPublish
   };
+}
+
+// ── TRIGGER HOMEPAGE REBUILD ─────────────────────────────────────────────────
+// Rebuild homepage every 5 minutes or after 3 articles
+let articlesSinceRebuild = 0;
+async function triggerHomepageRebuild() {
+  articlesSinceRebuild++;
+  const now = Date.now();
+  const timeSinceRebuild = lastHomepageRebuild ? now - lastHomepageRebuild.getTime() : 999999;
+  const rebuildEveryMinutes = 5;
+  const rebuildAfterArticles = 3;
+  
+  // Rebuild if enough time passed OR enough articles published
+  if (timeSinceRebuild > rebuildEveryMinutes * 60 * 1000 || articlesSinceRebuild >= rebuildAfterArticles) {
+    if (!homepageRebuildPending) {
+      homepageRebuildPending = true;
+      console.log('[Queue] Triggering homepage rebuild...');
+      try {
+        await rebuildAll();
+        lastHomepageRebuild = new Date();
+        articlesSinceRebuild = 0;
+        console.log('[Queue] Homepage rebuild complete.');
+      } catch (err) {
+        console.error('[Queue] Homepage rebuild error:', err.message);
+      } finally {
+        homepageRebuildPending = false;
+      }
+    }
+  }
 }
 
 module.exports = {
