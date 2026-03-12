@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Hidden Reporter — Uncovering stories behind the headlines</title>
   <meta name="description" content="The Hidden Reporter — Independent AI-powered news aggregation. Uncovering stories behind the headlines.">
-  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -13,7 +12,6 @@
   <link rel="alternate" type="application/rss+xml" title="The Hidden Reporter" href="/feed.xml">
   <link rel="canonical" href="https://the-hidden-reporter.pages.dev/">
   <script>window.__THR__={supabaseUrl:"https://krjlkddxfsoeqwpbsugv.supabase.co",supabaseKey:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtyamxrZGR4ZnNvZXF3cGJzdWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxMzU5NTIsImV4cCI6MjA4ODcxMTk1Mn0.CgM7MKy4qXTIMj3-oKHOfyAk7dsD219fe2_k-tTfaCo"};</script>
-  
 </head>
 <body>
   <header class="site-header" id="site-header">
@@ -26,13 +24,13 @@
     <nav class="main-nav" id="main-nav" aria-label="Main navigation">
       <a href="/">Home</a>
       <a href="/category/general.html">General</a>
-          <a href="/category/technology.html">Technology</a>
-          <a href="/category/business.html">Business</a>
-          <a href="/category/science.html">Science</a>
-          <a href="/category/world.html">World</a>
-          <a href="/category/politics.html">Politics</a>
-          <a href="/category/finance.html">Finance</a>
-          <a href="/category/sports.html">Sports</a>
+      <a href="/category/technology.html">Technology</a>
+      <a href="/category/business.html">Business</a>
+      <a href="/category/science.html">Science</a>
+      <a href="/category/world.html">World</a>
+      <a href="/category/politics.html">Politics</a>
+      <a href="/category/finance.html">Finance</a>
+      <a href="/category/sports.html">Sports</a>
     </nav>
 
     <div class="header-actions">
@@ -52,50 +50,77 @@
     </form>
   </div>
 </header>
+
   <main class="site-main" id="main-content">
-    
-  
 
-  <div class="layout-home">
-    <div class="home-main">
-
-      <!-- Featured Hero -->
-      <section class="featured-section">
-        <div class="section-header">
-          <h2 class="section-title">Top Stories</h2>
-        </div>
-        <div class="featured-grid">
-          <div class="featured-hero"></div>
-          <div class="featured-side"></div>
-        </div>
-      </section>
-
-      <!-- Latest News -->
-      <section class="latest-section" style="margin-top:calc(var(--gap)*2)">
-        <div class="section-header">
-          <h2 class="section-title">Latest News</h2>
-        </div>
-        <div class="latest-list"><p style="color:var(--gray-500);font-family:var(--sans);padding:24px 0">Fresh stories loading soon…</p></div>
-      </section>
-
-      <!-- Category Sections -->
-      <div style="margin-top:calc(var(--gap)*2)">
-        
-      </div>
-
+    <!-- Trending Topics Bar — populated from /api/trending.json by main.js -->
+    <div id="trending-bar-container" class="trending-bar" style="min-height:36px">
+      <span class="trending-label">Trending</span>
+      <span id="trending-topics-list" style="display:inline"><!-- Loaded from /api/trending.json --></span>
     </div>
 
-    <aside class="home-sidebar" aria-label="Sidebar">
-      
-      <div class="widget">
-        <h3 class="widget-title">Most Read</h3>
-        <div id="popular-articles"><!-- Populated by JS --></div>
+    <div class="layout-home">
+      <div class="home-main">
+
+        <!-- Featured / Hero Section — populated from /api/featured.json by main.js -->
+        <section class="featured-section">
+          <div class="section-header">
+            <h2 class="section-title">Top Stories</h2>
+          </div>
+          <div class="featured-grid" id="featured-grid">
+            <div class="featured-hero" id="featured-hero">
+              <!-- Loaded from /api/featured.json by initHomepage() in main.js -->
+              <p style="color:var(--gray-500);font-family:var(--sans);padding:24px 0">Top stories loading…</p>
+            </div>
+            <div class="featured-side" id="featured-side"></div>
+          </div>
+        </section>
+
+        <!-- Latest News — populated from /api/latest.json by main.js -->
+        <section class="latest-section" style="margin-top:calc(var(--gap)*2)">
+          <div class="section-header">
+            <h2 class="section-title">Latest News</h2>
+          </div>
+          <div class="latest-list" id="latest-list">
+            <p style="color:var(--gray-500);font-family:var(--sans);padding:24px 0">Fresh stories loading…</p>
+          </div>
+        </section>
+
+        <!-- Category Sections — populated from /api/category-*.json by main.js -->
+        <div id="category-sections" style="margin-top:calc(var(--gap)*2)"></div>
+
       </div>
-    </aside>
-  </div>
+
+      <aside class="home-sidebar" aria-label="Sidebar">
+        <div class="widget">
+          <h3 class="widget-title">Most Read</h3>
+          <div id="popular-articles"><!-- Populated from search-index.json by main.js --></div>
+        </div>
+      </aside>
+    </div>
+
   </main>
+
   <footer class="site-footer">
-  
+  <div class="footer-ad" aria-label="Advertisement"><script>
+  atOptions = {
+    'key' : 'a486284c1805dfd60fbc07165ab22031',
+    'format' : 'iframe',
+    'height' : 90,
+    'width' : 728,
+    'params' : {}
+  };
+</script>
+<script src="https://www.highperformanceformat.com/a486284c1805dfd60fbc07165ab22031/invoke.js"></script><script>
+  atOptions = {
+    'key' : 'a486284c1805dfd60fbc07165ab22031',
+    'format' : 'iframe',
+    'height' : 90,
+    'width' : 728,
+    'params' : {}
+  };
+</script>
+<script src="https://www.highperformanceformat.com/a486284c1805dfd60fbc07165ab22031/invoke.js"></script></div>
   <div class="footer-inner">
     <div class="footer-brand">
       <strong>The Hidden Reporter</strong><br>
@@ -108,9 +133,10 @@
       <a href="/feed.xml">RSS Feed</a>
       <a href="/sitemap.xml">Sitemap</a>
     </nav>
-    <p class="footer-copy">&copy; 2026 The Hidden Reporter. All rights reserved. AI-powered news aggregation.</p>
+    <p class="footer-copy">&copy; <span id="footer-year"></span> The Hidden Reporter. All rights reserved. AI-powered news aggregation.</p>
   </div>
 </footer>
+
   <script src="/js/main.js" defer></script>
 </body>
 </html>
