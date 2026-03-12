@@ -1,0 +1,74 @@
+# ============================================================
+# The Hidden Reporter — Automation Workflow
+# Runs the AI news pipeline every 45 minutes via GitHub Actions.
+# Required Secrets (Settings → Secrets → Actions):
+#   SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY
+#   AI_API_KEY, AI_MODEL, AI_BASE_URL
+#   GITHUB_TOKEN (auto-provided by Actions)
+#   GITHUB_OWNER, GITHUB_REPO
+#   SITE_URL, SITE_NAME
+# ============================================================
+
+name: News Automation Pipeline
+
+on:
+  schedule:
+    # Runs every 45 minutes — GitHub Actions minimum granularity is 5 min
+    - cron: '0,45 * * * *'   # at :00 and :45 past every hour
+  workflow_dispatch:         # allow manual trigger from GitHub UI
+
+jobs:
+  run-automation:
+    name: Fetch & Publish Articles
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ── 1. Checkout the repository ──────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}   # use PAT so pusher can commit back
+          fetch-depth: 1
+
+      # ── 2. Set up Node.js ───────────────────────────────────
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # ── 3. Install dependencies ─────────────────────────────
+      - name: Install dependencies
+        run: npm ci --prefer-offline
+
+      # ── 4. Run the automation engine (single pass) ──────────
+      - name: Run automation engine
+        env:
+          # Supabase
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SUPABASE_ANON_KEY:    ${{ secrets.SUPABASE_ANON_KEY }}
+          # AI provider (Groq, OpenAI, etc.)
+          AI_API_KEY:           ${{ secrets.AI_API_KEY }}
+          AI_MODEL:             ${{ secrets.AI_MODEL }}
+          AI_BASE_URL:          ${{ secrets.AI_BASE_URL }}
+          # GitHub (for the pusher to commit generated HTML)
+          GITHUB_TOKEN:         ${{ secrets.GH_PAT }}
+          GITHUB_OWNER:         ${{ secrets.GITHUB_OWNER }}
+          GITHUB_REPO:          ${{ secrets.GITHUB_REPO }}
+          GITHUB_BRANCH:        main
+          # Optional: News APIs
+          NEWS_API_KEY:         ${{ secrets.NEWS_API_KEY }}
+          USE_GDELT:            'true'
+          # Site config
+          SITE_URL:             ${{ secrets.SITE_URL }}
+          SITE_NAME:            'The Hidden Reporter'
+          # Publishing limits - UPDATED for smart queue
+          MAX_ARTICLES_PER_DAY:          '100'
+          FETCH_INTERVAL_MINUTES:        '10'
+          PUBLISH_INTERVAL_MINUTES:      '14'
+          MAX_QUEUE_SIZE:                '10'
+          QUEUE_STALE_HOURS:             '6'
+          BREAKING_NEWS_AGE_MINUTES:    '10'
+        run: node automation/index.js --once
