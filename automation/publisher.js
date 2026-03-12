@@ -19,6 +19,17 @@ const { getTopTrending } = require('./trending-detector');
 const { stageFiles, flush, getPendingCount } = require('./article-stager');
 const { downloadImage } = require('./image-handler');
 
+// ── BREAKING NEWS CHECK (duplicated from article-queue to avoid circular dependency) ───
+function checkIsBreakingNews(title, pubDate) {
+  const keywords = config.publishing.breakingNewsKeywords || [];
+  const titleLower = (title || '').toLowerCase();
+  const ageMinutes = pubDate ? (Date.now() - new Date(pubDate).getTime()) / 60000 : 999;
+  const ageLimit = config.publishing.breakingNewsAgeMinutes || 10;
+  
+  if (ageMinutes > ageLimit) return false;
+  return keywords.some(kw => titleLower.includes(kw.toLowerCase()));
+}
+
 // ── Push a single image file to GitHub immediately (isolated from article batch)
 async function commitImageFile(downloaded) {
   try {
@@ -150,14 +161,14 @@ async function buildHomepage(ads) {
     .from('articles')
     .select('*')
     .order('trend_score', { ascending: false })
-    .order('publish_date', { ascending: false })
+    .order('site_publish_date', { ascending: false })
     .limit(5);
 
   // Latest: 20 most recent
   const { data: latest } = await supabase
     .from('articles')
     .select('*')
-    .order('publish_date', { ascending: false })
+    .order('site_publish_date', { ascending: false })
     .limit(20);
 
   // Trending topics
@@ -170,7 +181,7 @@ async function buildHomepage(ads) {
       .from('articles')
       .select('*')
       .eq('category', cat)
-      .order('publish_date', { ascending: false })
+      .order('site_publish_date', { ascending: false })
       .limit(4);
     byCategory[cat] = data || [];
   }
@@ -178,7 +189,7 @@ async function buildHomepage(ads) {
   // Popular articles
   const { data: popular } = await supabase
     .from('articles')
-    .select('title, slug, category, publish_date')
+    .select('title, slug, category, site_publish_date, publish_date')
     .order('view_count', { ascending: false })
     .limit(5);
 
@@ -202,7 +213,7 @@ async function buildCategoryPages(ads) {
       .from('articles')
       .select('*')
       .eq('category', cat)
-      .order('publish_date', { ascending: false })
+      .order('site_publish_date', { ascending: false })
       .limit(30);
 
     const html = generateCategoryPage(cat, articles || [], ads.sidebar, ads.footer, ads['between-articles']);
@@ -215,8 +226,8 @@ async function buildCategoryPages(ads) {
 async function buildSearchIndex() {
   const { data: articles } = await supabase
     .from('articles')
-    .select('title, slug, summary, category, publish_date, source_name, featured_image_url')
-    .order('publish_date', { ascending: false })
+    .select('title, slug, summary, category, site_publish_date, publish_date, source_name, featured_image_url')
+    .order('site_publish_date', { ascending: false })
     .limit(500);
 
   return generateSearchIndex(articles || []);
@@ -226,8 +237,8 @@ async function buildSearchIndex() {
 async function buildRssFeed() {
   const { data: articles } = await supabase
     .from('articles')
-    .select('title, slug, summary, category, publish_date, source_name')
-    .order('publish_date', { ascending: false })
+    .select('title, slug, summary, category, site_publish_date, publish_date, source_name')
+    .order('site_publish_date', { ascending: false })
     .limit(30);
 
   return generateRssFeed(articles || []);
@@ -293,7 +304,10 @@ async function publishArticle(extractedData, rewrittenData) {
     summary: rewrittenData.summary,
     source_name: extractedData.sourceName,
     source_url: extractedData.sourceUrl,
-    publish_date: (extractedData.publishDate || new Date()).toISOString(),
+    source_publish_date: (extractedData.publishDate || null),
+    site_publish_date: new Date().toISOString(),
+    publish_date: new Date().toISOString(),
+    is_breaking: checkIsBreakingNews(extractedData.title, extractedData.publishDate),
     category: extractedData.category || 'general',
     tags: rewrittenData.tags || [],
     seo_title: rewrittenData.seoTitle,
@@ -324,47 +338,22 @@ async function publishArticle(extractedData, rewrittenData) {
     ads.footer
   );
 
-  // Rebuild global files
-  const [searchIndex, rssFeed, homepageHtml] = await Promise.all([
-    buildSearchIndex(),
-    buildRssFeed(),
-    buildHomepage(ads),
-  ]);
+  // OPTIMIZED: Don't rebuild homepage/category pages on every publish
+  // Instead, we use JSON feeds for dynamic content loading
+  // RSS feed is still generated for external subscribers
+  const rssFeed = await buildRssFeed();
 
-  const categoryFiles = await buildCategoryPages(ads);
-
-  // Build topic pages for detected topics
-  const topicFiles = [];
-  for (const topic of seo.topics) {
-    const topicSlug = topic.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const { data: topicArticles } = await supabase
-      .from('articles')
-      .select('*')
-      .or(`title.ilike.%${topic}%,summary.ilike.%${topic}%,tags.cs.{"${topic}"}`)
-      .order('publish_date', { ascending: false })
-      .limit(20);
-
-    if (topicArticles?.length) {
-      const html = generateTopicPage(topic, topicArticles, ads.footer);
-      topicFiles.push({ path: `public/topic/${topicSlug}.html`, content: html });
-    }
-  }
-
-  // ── Stage all files for batch commit ────────────────────────────────────
-  // Note: image files are committed immediately above (see commitImageFile).
+  // ── Stage only the article file (not homepage/category pages) ───────────────
+  // Homepage loads dynamically from JSON feeds
   const filesToStage = [
     { path: `public/articles/${savedArticle.category}/${savedArticle.slug}.html`, content: articleHtml },
-    { path: 'public/search-index.json', content: searchIndex },
     { path: 'public/feed.xml', content: rssFeed },
-    { path: 'public/index.html', content: homepageHtml },
-    ...categoryFiles,
-    ...topicFiles,
   ];
 
   // Stage files (auto-flushes when batch threshold is reached)
   await stageFiles(filesToStage, true);
 
-  console.log(`[Publisher] Staged: ${savedArticle.slug} (${filesToStage.length} files)`);
+  console.log(`[Publisher] Staged: ${savedArticle.slug} (article only)`);
   return savedArticle;
 }
 
@@ -384,7 +373,7 @@ async function rebuildArticleFiles() {
   const { data: articles, error } = await supabase
     .from('articles')
     .select('*')
-    .order('publish_date', { ascending: false })
+    .order('site_publish_date', { ascending: false })
     .limit(500);
 
   if (error) throw new Error(`[Publisher] rebuildArticleFiles DB error: ${error.message}`);
@@ -555,9 +544,9 @@ async function rebuildTopicPages() {
     // matching Search articles the topic in title, summary, tags, or content
     const { data: topicArticles } = await supabase
       .from('articles')
-      .select('id, title, slug, summary, category, publish_date, source_name, featured_image_url, tags, content')
+      .select('id, title, slug, summary, category, site_publish_date, publish_date, source_name, featured_image_url, tags, content')
       .or(`title.ilike.%${keyword}%,summary.ilike.%${keyword}%,tags.cs.{"${keyword}"}`)
-      .order('publish_date', { ascending: false })
+      .order('site_publish_date', { ascending: false })
       .limit(20);
 
     if (topicArticles?.length) {
@@ -580,14 +569,20 @@ async function rebuildTopicPages() {
 }
 
 // ── Startup rebuild ───────────────────────────────────────────────────────────────────────
-// Runs once on service start. Pushes all article HTML files, search-index.json,
-// category pages, RSS feed, topic pages, and any missing self-hosted images.
+// Runs once on service start. Pushes all article HTML files, JSON feeds,
+// RSS feed, homepage, category pages, topic pages, and any missing self-hosted images.
 async function rebuildAll() {
   console.log('[Publisher] Running startup rebuild...');
   try {
     const ads = await getAds();
 
-    // Rebuild search index, RSS, homepage, and category pages in parallel
+    // Import JSON feeds generator
+    const { updateAllFeeds } = require('./json-feeds');
+    
+    // Generate JSON feeds first (for dynamic homepage loading)
+    const feedFiles = await updateAllFeeds();
+    
+    // Build homepage and category pages (for SEO and fallback)
     const [searchIndex, rssFeed, homepageHtml] = await Promise.all([
       buildSearchIndex(),
       buildRssFeed(),
@@ -596,15 +591,16 @@ async function rebuildAll() {
     const categoryFiles = await buildCategoryPages(ads);
 
     const staticFiles = [
+      ...feedFiles, // JSON feeds for dynamic loading
       { path: 'public/search-index.json', content: searchIndex },
       { path: 'public/feed.xml', content: rssFeed },
       { path: 'public/index.html', content: homepageHtml },
       ...categoryFiles,
     ];
-    await pushFiles(staticFiles, 'chore: startup rebuild of index, homepage, and category pages');
+    await pushFiles(staticFiles, 'chore: startup rebuild - homepage, JSON feeds, category pages');
     console.log(`[Publisher] Static files pushed (${staticFiles.length} files).`);
 
-    // Rebuild all article HTML files to new /articles/{category}/ structure
+    // Rebuild all article HTML files
     await rebuildArticleFiles();
 
     // Rebuild all topic pages from trending_topics
