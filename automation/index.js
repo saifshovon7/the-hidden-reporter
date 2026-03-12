@@ -20,12 +20,12 @@ const { fetchAllSources, markProcessed } = require('./fetcher');
 const { extractArticle } = require('./extractor');
 const { rewriteArticle } = require('./ai-rewriter');
 const { isDuplicate } = require('./duplicate-detector');
-const { publishArticle, getTodayCount, getTodayCategoryStats, rebuildAll, flushStagedArticles } = require('./publisher');
+const { publishArticle, getTodayCount, getTodayCategoryStats, rebuildArticlesOnly, flushStagedArticles } = require('./publisher');
 const { updateTrending } = require('./trending-detector');
 const { runCleanup } = require('./cleanup');
 const { generateSitemap } = require('./sitemap-generator');
 const { pushFile, validateGitHub, logSessionStats } = require('./github-pusher');
-const { initializeQueue, fetchArticlesToQueue, startPublisher, startQueueFetcher, getQueueStatus } = require('./article-queue');
+const { initializeQueue, fetchArticlesToQueue, startPublisher, startQueueFetcher, startDeploymentScheduler, getQueueStatus } = require('./article-queue');
 
 // ── Validate config on startup ────────────────────────────────────────────────
 validate();
@@ -133,15 +133,9 @@ async function runPipeline() {
       await updateTrending();
     }
 
-    if (published > 0) {
-      try {
-        const sitemap = await generateSitemap();
-        await pushFile('public/sitemap.xml', sitemap, 'chore: update sitemap after publish');
-        console.log('[Pipeline] Sitemap updated.');
-      } catch (err) {
-        console.error('[Pipeline] Sitemap update error:', err.message);
-      }
-    }
+    // ⚠️ Sitemap is updated during nightly maintenance (3 AM) only.
+    // Pushing the sitemap here triggered an extra commit/deploy after every run.
+    // With the batch system, the sitemap is regenerated as part of daily cleanup.
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     console.log(`\n[Pipeline] Run complete. Published: ${published}. Time: ${elapsed}s.`);
@@ -164,6 +158,8 @@ async function startQueuePipeline() {
   console.log(`[Scheduler] Publish interval: ${config.publishing.publishIntervalMinutes} minutes`);
   console.log(`[Scheduler] Fetch interval: ${config.publishing.fetchIntervalMinutes} minutes`);
   console.log(`[Scheduler] Max queue size: ${config.publishing.maxQueueSize} articles`);
+  console.log(`[Scheduler] Max deploys/hr: ${config.publishing.maxDeploymentsPerHour}`);
+  console.log(`[Scheduler] Min deploy interval: ${config.publishing.minDeployIntervalMinutes} minutes`);
 
   // Initialize queue from database
   await initializeQueue();
@@ -171,13 +167,20 @@ async function startQueuePipeline() {
   // Start the continuous queue fetcher (gathers articles)
   startQueueFetcher();
 
-  // Start the publisher (publishes at fixed intervals)
+  // Start the publisher (publishes articles at fixed intervals)
   await startPublisher();
+
+  // ✅ FIX 1: Wire in the deployment scheduler — this was exported but never called,
+  // meaning ALL deployment scheduling has been dead since it was written.
+  // The scheduler checks every 5 min and fires a batch deploy when:
+  //   (a) staged articles >= ARTICLES_PER_BATCH, OR
+  //   (b) MIN_DEPLOY_INTERVAL has elapsed and there are staged files.
+  startDeploymentScheduler();
 
   // Show queue status periodically
   setInterval(() => {
     const status = getQueueStatus();
-    console.log(`[Queue] ${status.pending} pending | ${status.publishedToday}/${status.maxPerDay} today | Next: ${status.nextPublishTime.toLocaleTimeString()}`);
+    console.log(`[Queue] ${status.pending} pending | ${status.publishedToday}/${status.maxPerDay} today | Deploys this hour: ${status.deploymentsThisHour}/${status.maxDeploymentsPerHour}`);
   }, config.publishing.publishIntervalMinutes * 60 * 1000 / 2);
 }
 
@@ -186,6 +189,7 @@ async function runDailyMaintenance() {
   console.log('\n[Maintenance] Starting daily maintenance...');
   try {
     await runCleanup();
+    // Sitemap update runs once per day only (not on every batch deploy)
     const sitemap = await generateSitemap();
     await pushFile('public/sitemap.xml', sitemap, 'chore: daily sitemap update');
     console.log('[Maintenance] Daily maintenance complete.');
@@ -214,9 +218,15 @@ async function startScheduler() {
     }
   }
 
-  // Run startup rebuild
-  rebuildAll().then(() => {
+  // ✅ FIX 4: Only rebuild article HTML files + JSON feeds on startup.
+  // Homepage and category pages are now static skeletons that load content
+  // dynamically from JSON feeds — they never need to be re-committed.
+  rebuildArticlesOnly().then(() => {
     // Start queue-based publishing system
+    startQueuePipeline();
+  }).catch(err => {
+    console.error('[Scheduler] Startup rebuild error:', err.message);
+    // Start publishing even if rebuild fails
     startQueuePipeline();
   });
 
