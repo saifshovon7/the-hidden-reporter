@@ -44,10 +44,11 @@ const config = {
   gdelt: {
     enabled: process.env.USE_GDELT === 'true',
   },
-  contextualWeb: {
-    apiKey: process.env.CONTEXTUAL_WEB_API_KEY || '',
-    enabled: Boolean(process.env.CONTEXTUAL_WEB_API_KEY),
-    country: process.env.CONTEXTUAL_WEB_COUNTRY || 'us',
+  gnews: {
+    apiKey: process.env.GNEWS_API_KEY || '',
+    enabled: Boolean(process.env.GNEWS_API_KEY),
+    country: process.env.GNEWS_COUNTRY || 'us',
+    language: process.env.GNEWS_LANGUAGE || 'en',
   },
   googleNews: {
     enabled: process.env.USE_GOOGLE_NEWS_SCRAPER === 'true',
