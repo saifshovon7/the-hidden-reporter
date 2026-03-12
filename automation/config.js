@@ -56,15 +56,22 @@ const config = {
   // ── Publishing ────────────────────────────────────────────
   publishing: {
     maxPerDay: parseInt(process.env.MAX_ARTICLES_PER_DAY || '100', 10),
+    // How many articles to accumulate before a batch commit (= 1 Cloudflare deploy)
+    // Higher = fewer deploys per day. Default 10 means ~10 articles per deploy.
     maxArticlesPerBatch: parseInt(process.env.MAX_ARTICLES_PER_BATCH || '10', 10),
-    fetchIntervalMinutes: parseInt(process.env.FETCH_INTERVAL_MINUTES || '10', 10),
+    batchSizeThreshold: parseInt(process.env.BATCH_SIZE_THRESHOLD || '10', 10),
+    // Fetch new articles every 15 minutes (was 10) — reduces API calls and queue churn
+    fetchIntervalMinutes: parseInt(process.env.FETCH_INTERVAL_MINUTES || '15', 10),
     publishIntervalMinutes: parseInt(process.env.PUBLISH_INTERVAL_MINUTES || '14', 10),
     postPublishDelayMinutes: parseInt(process.env.POST_PUBLISH_DELAY_MINUTES || '5', 10),
     cleanupMonths: 24,
     maxQueueSize: parseInt(process.env.MAX_QUEUE_SIZE || '20', 10),
-    queueStaleHours: parseInt(process.env.QUEUE_STALE_HOURS || '6', 10),
-    // Deployment limiter - prevents excessive Cloudflare Pages builds
+    // Discard articles older than 4 hours from the queue (was 6) — keeps queue fresh
+    queueStaleHours: parseInt(process.env.QUEUE_STALE_HOURS || '4', 10),
+    // Deployment limiter — prevents excessive Cloudflare Pages builds
     maxDeploymentsPerHour: parseInt(process.env.MAX_DEPLOYMENTS_PER_HOUR || '3', 10),
+    // Minimum gap between two deployments (minutes)
+    minDeployIntervalMinutes: parseInt(process.env.MIN_DEPLOY_INTERVAL_MINUTES || '20', 10),
     // Breaking news detection
     breakingNewsKeywords: ['breaking', 'urgent', 'live', 'alert', 'emergency', 'explosion', 'earthquake', 'attack', 'terror', 'shooting', 'flood', 'hurricane', 'volcano', 'crisis', 'devastating', 'breaking news'],
     breakingNewsAgeMinutes: parseInt(process.env.BREAKING_NEWS_AGE_MINUTES || '10', 10),
