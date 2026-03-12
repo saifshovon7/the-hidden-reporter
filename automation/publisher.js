@@ -30,16 +30,18 @@ function checkIsBreakingNews(title, pubDate) {
   return keywords.some(kw => titleLower.includes(kw.toLowerCase()));
 }
 
-// ── Push a single image file to GitHub immediately (isolated from article batch)
-async function commitImageFile(downloaded) {
+// ── Stage an image into the article batch (NOT as a separate commit) ────────
+// Previously this committed immediately, causing 1 deploy per article.
+// Now it stages the image with the rest of the article files.
+async function stageImageFile(downloaded) {
   try {
-    await pushFiles(
+    await stageFiles(
       [{ path: downloaded.localPath, content: downloaded.content, encoding: 'base64' }],
-      `chore: add article image ${downloaded.localPath}`
+      false // not an article — don't increment article counter
     );
     return true;
   } catch (err) {
-    console.warn(`[Publisher] Image commit failed: ${err.message}`);
+    console.warn(`[Publisher] Image staging failed: ${err.message}`);
     return false;
   }
 }
@@ -281,12 +283,13 @@ async function publishArticle(extractedData, rewrittenData) {
     try {
       const downloaded = await downloadImage(featuredImageUrl, seo.slug);
       if (downloaded) {
-        const committed = await commitImageFile(downloaded);
-        if (committed) {
+        // Stage into the batch — no separate commit
+        const staged = await stageImageFile(downloaded);
+        if (staged) {
           featuredImageUrl = downloaded.localUrl;
-          console.log(`[Publisher] Image self-hosted: ${downloaded.localUrl}`);
+          console.log(`[Publisher] Image staged for batch: ${downloaded.localUrl}`);
         } else {
-          console.log('[Publisher] Image commit failed — keeping external URL.');
+          console.log('[Publisher] Image staging failed — keeping external URL.');
         }
       } else {
         console.log('[Publisher] Image download returned null — using external URL.');
@@ -338,22 +341,17 @@ async function publishArticle(extractedData, rewrittenData) {
     ads.footer
   );
 
-  // OPTIMIZED: Don't rebuild homepage/category pages on every publish
-  // Instead, we use JSON feeds for dynamic content loading
-  // RSS feed is still generated for external subscribers
-  const rssFeed = await buildRssFeed();
-
-  // ── Stage only the article file (not homepage/category pages) ───────────────
-  // Homepage loads dynamically from JSON feeds
+  // OPTIMIZED: Only stage the article HTML file.
+  // Homepage and category pages load dynamically from JSON feeds (no re-commit needed).
+  // RSS feed and search index are regenerated in deployBatch() atomically with the batch.
   const filesToStage = [
     { path: `public/articles/${savedArticle.category}/${savedArticle.slug}.html`, content: articleHtml },
-    { path: 'public/feed.xml', content: rssFeed },
   ];
 
   // Stage files (auto-flushes when batch threshold is reached)
   await stageFiles(filesToStage, true);
 
-  console.log(`[Publisher] Staged: ${savedArticle.slug} (article only)`);
+  console.log(`[Publisher] Staged: ${savedArticle.slug} (article only — feeds updated at deploy time)`);
   return savedArticle;
 }
 
@@ -568,9 +566,66 @@ async function rebuildTopicPages() {
   return topicFiles;
 }
 
-// ── Startup rebuild ───────────────────────────────────────────────────────────────────────
+// ── Startup rebuild ────────────────────────────────────────────────────────────
+// Pushes dynamic skeleton pages (homepage + categories) + JSON feeds + search
+// index + RSS feed in a SINGLE commit. This is the only commit on startup.
+//
+// What we DO commit on startup:
+//   ① Dynamic homepage skeleton (index.html)      — uses JS to load from /api/*.json
+//   ② Dynamic category page skeletons             — uses JS to load from /api/category-*.json
+//   ③ JSON feeds (public/api/*.json)              — loaded by the front-end JS
+//   ④ Search index (public/search-index.json)     — loaded by the search page
+//   ⑤ RSS feed (public/feed.xml)                  — for external subscribers
+//
+// What we do NOT commit on startup (to avoid extra deploys):
+//   ✗ All existing article HTML files (already committed; unchanged)
+//   ✗ Topic pages (moved to daily maintenance at 3 AM)
+async function rebuildArticlesOnly() {
+  console.log('[Publisher] Running startup rebuild (skeletons + feeds in 1 commit)...');
+  try {
+    const { updateAllFeeds } = require('./json-feeds');
+    const ads = await getAds();
+
+    // ① Generate dynamic homepage skeleton (JS loads content from /api/*.json)
+    const homepageHtml = generateHomepage({});
+
+    // ② Generate dynamic category page skeletons (JS loads from /api/category-*.json)
+    const categoryFiles = config.categories.map(cat => ({
+      path: `public/category/${cat}.html`,
+      content: generateCategoryPage(cat, [], ads.sidebar, ads.footer, ads['between-articles']),
+    }));
+
+    // ③ Generate JSON feeds for dynamic front-end loading
+    const feedFiles = await updateAllFeeds();
+
+    // ④⑤ Build search index and RSS feed
+    const [searchIndex, rssFeed] = await Promise.all([
+      buildSearchIndex(),
+      buildRssFeed(),
+    ]);
+
+    const allFiles = [
+      { path: 'public/index.html', content: homepageHtml },
+      ...categoryFiles,
+      ...feedFiles,
+      { path: 'public/search-index.json', content: searchIndex },
+      { path: 'public/feed.xml', content: rssFeed },
+    ];
+
+    // Single commit = single Cloudflare deploy on startup
+    await pushFiles(allFiles, 'chore: startup — dynamic skeletons + feeds + search index');
+    console.log(`[Publisher] Startup complete: ${allFiles.length} files in 1 commit.`);
+    console.log('[Publisher] Homepage and category pages are now dynamic skeletons.');
+    console.log('[Publisher] Article HTML files are unchanged (no rebuild needed).');
+  } catch (err) {
+    console.error('[Publisher] Startup rebuild error:', err.message);
+  }
+}
+
+// ── Full rebuild (manual use only) ────────────────────────────────────────────────────────
 // Runs once on service start. Pushes all article HTML files, JSON feeds,
 // RSS feed, homepage, category pages, topic pages, and any missing self-hosted images.
+// Use this ONLY for a manual full rebuild (e.g. after a template change).
 async function rebuildAll() {
   console.log('[Publisher] Running startup rebuild...');
   try {
@@ -612,4 +667,4 @@ async function rebuildAll() {
   }
 }
 
-module.exports = { publishArticle, getTodayCount, getTodayCategoryStats, rebuildAll, rebuildImages, flushStagedArticles };
+module.exports = { publishArticle, getTodayCount, getTodayCategoryStats, rebuildAll, rebuildArticlesOnly, rebuildImages, flushStagedArticles, buildRssFeed, buildSearchIndex };
