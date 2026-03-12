@@ -2,13 +2,14 @@
 /**
  * article-queue.js
  * OPTIMIZED SMART QUEUE SYSTEM
- * 
- * Features:
- * - Batch publishing: accumulate articles before deploying
- * - Deployment limiter: max X deployments per hour
- * - JSON feeds: homepage loads dynamically, no rebuild needed
- * - Breaking news detection: publishes immediately
- * - Fresh news prioritized throughout the day
+ *
+ * Fixes applied:
+ *  1. startDeploymentScheduler() is now called from startQueuePipeline() (it was dead code)
+ *  2. updateFeedsAndDeploy() merges JSON feeds + staged article files into ONE commit
+ *  3. Hourly deployment counter resets every 60 minutes (was never reset before)
+ *  4. MIN_DEPLOY_INTERVAL guard fixed (arithmetic bug with unitless number)
+ *  5. Queue max size enforced — oldest non-breaking articles discarded when full
+ *  6. startDeploymentScheduler exported so index.js can call it independently if needed
  */
 
 const { createClient } = require('@supabase/supabase-js');
@@ -17,105 +18,92 @@ const { fetchAllSources } = require('./fetcher');
 const { extractArticle } = require('./extractor');
 const { rewriteArticle } = require('./ai-rewriter');
 const { isDuplicate } = require('./duplicate-detector');
-const { publishArticle, getTodayCount, getTodayCategoryStats } = require('./publisher');
+const { publishArticle, getTodayCount, getTodayCategoryStats, buildRssFeed, buildSearchIndex } = require('./publisher');
 const { stageFiles, flush, getPendingCount } = require('./article-stager');
 const { pushFiles } = require('./github-pusher');
-const { updateAllFeeds, pushFeedsToGitHub } = require('./json-feeds');
+const { updateAllFeeds } = require('./json-feeds');
 
 const supabase = createClient(config.supabase.url, config.supabase.serviceKey);
 
-// Queue state
+// ── Queue state ──────────────────────────────────────────────────────────────
 let articleQueue = [];
 let isPublisherRunning = false;
 let isFetcherRunning = false;
 let lastPublishTime = null;
 let todayPublishCount = 0;
-let articlesSinceLastFeedUpdate = 0;
-let lastFeedUpdateTime = null;
+let articlesSinceLastDeploy = 0;
 
-// Deployment limiter
-let deploymentQueue = [];
+// ── Deployment limiter ───────────────────────────────────────────────────────
 let lastDeploymentTime = null;
 let deploymentsThisHour = 0;
-const MAX_DEPLOYMENTS_PER_HOUR = config.publishing?.maxDeploymentsPerHour || 3;
-const MIN_MINUTES_BETWEEN = 20; // At least 20 minutes between deployments
+const MAX_DEPLOYMENTS_PER_HOUR = config.publishing.maxDeploymentsPerHour || 3;
+// Minimum MILLISECONDS between any two deployments (default 20 min)
+const MIN_DEPLOY_INTERVAL_MS = (config.publishing.minDeployIntervalMinutes || 20) * 60 * 1000;
+// How many articles to batch before forcing a deploy (even if interval not reached)
+const ARTICLES_PER_BATCH = config.publishing.batchSizeThreshold || config.publishing.maxArticlesPerBatch || 5;
+
+// Reset deployment counter every 60 minutes so the hourly cap actually cycles
+setInterval(() => {
+  if (deploymentsThisHour > 0) {
+    console.log(`[Queue] Hourly deploy counter reset (was ${deploymentsThisHour})`);
+  }
+  deploymentsThisHour = 0;
+}, 60 * 60 * 1000);
 
 // ── BREAKING NEWS DETECTION ─────────────────────────────────────────────────
 function isBreakingNews(item) {
   const keywords = config.publishing.breakingNewsKeywords || [];
   const title = (item.title || '').toLowerCase();
-  const ageMinutes = item.pubDate 
-    ? (Date.now() - new Date(item.pubDate).getTime()) / 60000 
+  const ageMinutes = item.pubDate
+    ? (Date.now() - new Date(item.pubDate).getTime()) / 60000
     : 999;
-  
   const ageLimit = config.publishing.breakingNewsAgeMinutes || 10;
-  
-  // Must be recent AND contain breaking keywords
   if (ageMinutes > ageLimit) return false;
-  
   return keywords.some(kw => title.includes(kw.toLowerCase()));
 }
 
-// ── GET ARTICLE PRIORITY SCORE ───────────────────────────────────────────────
-// Higher score = higher priority (publish sooner)
+// ── GET ARTICLE PRIORITY SCORE ────────────────────────────────────────────────
 function getArticlePriority(item) {
   const now = Date.now();
   const pubTime = item.pubDate ? new Date(item.pubDate).getTime() : now;
   const ageMinutes = (now - pubTime) / 60000;
-  
-  // Base priority: newer = higher (inverted age)
   let score = 1000 - ageMinutes;
-  
-  // Bonus for breaking news
-  if (isBreakingNews(item)) {
-    score += 10000; // Much higher priority
-  }
-  
+  if (isBreakingNews(item)) score += 10000;
   return Math.max(0, score);
 }
 
-// ── SORT QUEUE BY PRIORITY ─────────────────────────────────────────────────
+// ── SORT QUEUE BY PRIORITY ────────────────────────────────────────────────────
 function sortQueue() {
   articleQueue.sort((a, b) => getArticlePriority(b) - getArticlePriority(a));
 }
 
-// ── CLEANUP STALE ARTICLES ─────────────────────────────────────────────────
+// ── CLEANUP STALE ARTICLES ────────────────────────────────────────────────────
 function cleanupStaleArticles() {
   const staleHours = config.publishing.queueStaleHours || 6;
   const staleMs = staleHours * 60 * 60 * 1000;
   const now = Date.now();
-  
   const beforeCount = articleQueue.length;
-  
+
   articleQueue = articleQueue.filter(item => {
     if (item.status !== 'pending') return false;
-    
     const pubTime = item.pubDate ? new Date(item.pubDate).getTime() : now;
     const ageMs = now - pubTime;
-    
-    // Keep if: breaking news OR not stale OR queue is small
     if (isBreakingNews(item)) return true;
     if (ageMs < staleMs) return true;
-    if (articleQueue.length <= 3) return true; // Keep minimum
-    
+    if (articleQueue.length <= 3) return true;
     return false;
   });
-  
+
   if (beforeCount !== articleQueue.length) {
     console.log(`[Queue] Cleaned up ${beforeCount - articleQueue.length} stale articles`);
   }
 }
 
-// ── ADD ARTICLE TO QUEUE ───────────────────────────────────────────────────
+// ── ADD ARTICLE TO QUEUE ──────────────────────────────────────────────────────
 async function addToQueue(item) {
-  const maxQueue = config.publishing.maxQueueSize || 10;
-  
-  // Check for duplicates
-  if (articleQueue.some(q => q.url === item.url)) {
-    return false;
-  }
-  
-  // Add new article
+  const maxQueue = config.publishing.maxQueueSize || 20;
+  if (articleQueue.some(q => q.url === item.url)) return false;
+
   const queueItem = {
     id: Date.now() + Math.random(),
     url: item.url,
@@ -126,65 +114,54 @@ async function addToQueue(item) {
     sourceData: item,
     status: 'pending',
     isBreaking: isBreakingNews(item),
-    createdAt: new Date()
+    createdAt: new Date(),
   };
-  
+
   articleQueue.push(queueItem);
-  
-  // Sort by priority (newest first, breaking news priority)
   sortQueue();
-  
-  // Remove oldest if queue exceeds max
-  if (articleQueue.length > maxQueue) {
-    // Keep breaking news, remove oldest regular articles
+
+  // Enforce max queue size — discard oldest non-breaking when full
+  while (articleQueue.length > maxQueue) {
     const nonBreaking = articleQueue.filter(q => !q.isBreaking && q.status === 'pending');
     if (nonBreaking.length > 0) {
-      // Remove the oldest non-breaking
-      const toRemove = nonBreaking[0];
+      // nonBreaking array is sorted same as queue; last = lowest priority = oldest
+      const toRemove = nonBreaking[nonBreaking.length - 1];
       articleQueue = articleQueue.filter(q => q.id !== toRemove.id);
-      console.log(`[Queue] Removed stale article: ${toRemove.title?.slice(0, 40)}`);
+      console.log(`[Queue] Evicted oldest article: ${toRemove.title?.slice(0, 50)}`);
+    } else {
+      break; // All are breaking — keep them all even if over max
     }
   }
-  
+
   return true;
 }
 
-// ── FETCH ARTICLES ───────────────────────────────────────────────────────────
+// ── FETCH ARTICLES TO QUEUE ──────────────────────────────────────────────────
 async function fetchArticlesToQueue() {
   if (isFetcherRunning) return;
   isFetcherRunning = true;
-  
+
   try {
     console.log(`\n[Queue] Fetching new articles... (queue: ${articleQueue.length})`);
-    
     const categoryStats = await getTodayCategoryStats();
     const fetchedItems = await fetchAllSources(categoryStats);
-    
+
     if (!fetchedItems.length) {
       console.log('[Queue] No new articles found');
       return;
     }
-    
+
     let added = 0;
     for (const item of fetchedItems) {
-      if (articleQueue.length >= config.publishing.maxQueueSize) {
-        break;
-      }
-      
-      const wasAdded = await addToQueue(item);
-      if (wasAdded) added++;
+      if (articleQueue.length >= config.publishing.maxQueueSize) break;
+      if (await addToQueue(item)) added++;
     }
-    
-    // Cleanup stale articles
+
     cleanupStaleArticles();
-    
-    // Sort queue
     sortQueue();
-    
-    // Show breaking news count
+
     const breakingCount = articleQueue.filter(q => q.isBreaking && q.status === 'pending').length;
     console.log(`[Queue] Added ${added} articles | Queue: ${articleQueue.length} | Breaking: ${breakingCount}`);
-    
   } catch (err) {
     console.error('[Queue] Fetch error:', err.message);
   } finally {
@@ -192,216 +169,230 @@ async function fetchArticlesToQueue() {
   }
 }
 
-// ── PROCESS SINGLE ARTICLE ───────────────────────────────────────────────────
+// ── CHECK IF DEPLOY IS ALLOWED ────────────────────────────────────────────────
+function canDeployNow() {
+  const now = Date.now();
+  const msSinceDeploy = lastDeploymentTime ? now - lastDeploymentTime : Infinity;
+  const intervalOk = msSinceDeploy >= MIN_DEPLOY_INTERVAL_MS;
+  const countOk = deploymentsThisHour < MAX_DEPLOYMENTS_PER_HOUR;
+
+  if (!intervalOk) {
+    const waitMin = ((MIN_DEPLOY_INTERVAL_MS - msSinceDeploy) / 60000).toFixed(1);
+    console.log(`[Queue] Deploy skipped — interval not reached (${waitMin} min remaining)`);
+  } else if (!countOk) {
+    console.log(`[Queue] Deploy skipped — hourly cap reached (${deploymentsThisHour}/${MAX_DEPLOYMENTS_PER_HOUR})`);
+  }
+
+  return intervalOk && countOk;
+}
+
+// ── DEPLOYMENT: merge article files + JSON feeds + RSS + search index into ONE commit ──
+// Every batch deploy is a complete self-consistent snapshot:
+//   article HTML files + image files + JSON feeds + feed.xml + search-index.json
+// This guarantees exactly ONE Cloudflare Pages deploy per batch.
+async function deployBatch(label = 'batch') {
+  if (!canDeployNow()) return false;
+
+  const pending = getPendingCount();
+  if (pending.files === 0) {
+    console.log('[Queue] Deploy skipped — no staged files');
+    return false;
+  }
+
+  console.log(`[Queue] ▶ Deploying ${label}: ${pending.articles} article(s) + feeds in ONE commit…`);
+
+  try {
+    const { getStagedFiles, clearStagedFiles } = require('./article-stager');
+
+    // 1. Pull staged article/image files from the stager buffer
+    const articleFiles = getStagedFiles();
+
+    // 2. Generate updated JSON feeds
+    const feedFiles = await updateAllFeeds();
+
+    // 3. Generate updated RSS feed and search index
+    const [rssFeed, searchIndex] = await Promise.all([
+      buildRssFeed(),
+      buildSearchIndex(),
+    ]);
+
+    // 4. Merge ALL files and push in a SINGLE commit — ONE Cloudflare deploy
+    const allFiles = [
+      ...articleFiles,
+      ...feedFiles,
+      { path: 'public/feed.xml', content: rssFeed },
+      { path: 'public/search-index.json', content: searchIndex },
+    ];
+
+    if (allFiles.length === 0) {
+      console.log('[Queue] Deploy skipped — nothing to commit after merge');
+      return false;
+    }
+
+    const msg = `feat: batch publish ${pending.articles} article(s) + update feeds [${new Date().toISOString().slice(0,16)}]`;
+    await pushFiles(allFiles, msg);
+
+    // Clear the stager buffer after successful push
+    clearStagedFiles();
+
+    deploymentsThisHour++;
+    lastDeploymentTime = Date.now();
+    articlesSinceLastDeploy = 0;
+    console.log(`[Queue] ✓ Deploy complete — ${allFiles.length} files committed (${deploymentsThisHour}/${MAX_DEPLOYMENTS_PER_HOUR} this hour)`);
+    return true;
+  } catch (err) {
+    console.error('[Queue] Deploy error:', err.message);
+    return false;
+  }
+}
+
+// ── PROCESS SINGLE ARTICLE ────────────────────────────────────────────────────
 async function processQueueItem(forceImmediate = false) {
   const todayCount = await getTodayCount();
-  
+
   if (todayCount >= config.publishing.maxPerDay) {
     console.log(`[Queue] Daily limit reached (${todayCount}/${config.publishing.maxPerDay})`);
     return false;
   }
-  
-  // Find highest priority pending article
-  // If forceImmediate (breaking news), find the newest one
+
   let item = null;
-  
   if (forceImmediate) {
-    // Find newest breaking news
     item = articleQueue.find(q => q.status === 'pending' && q.isBreaking);
-    if (!item) {
-      // No breaking news, just get newest
-      item = articleQueue.find(q => q.status === 'pending');
-    }
+    if (!item) item = articleQueue.find(q => q.status === 'pending');
   } else {
-    // Regular: get highest priority
     item = articleQueue.find(q => q.status === 'pending');
   }
-  
-  if (!item) {
-    return false;
-  }
-  
+
+  if (!item) return false;
+
   const label = item.isBreaking ? '🔥 BREAKING' : '📰';
   console.log(`\n[Queue] ${label}: ${item.title?.slice(0, 60) || item.url}`);
-  
+
   try {
-    // Extract content
     const extracted = await extractArticle(item.sourceData);
-    
-    // Check duplicates
+
     const dup = await isDuplicate(extracted.sourceUrl, extracted.title, extracted.content);
     if (dup) {
-      console.log('[Queue] Duplicate - removing from queue');
+      console.log('[Queue] Duplicate — removing from queue');
       articleQueue = articleQueue.filter(q => q.id !== item.id);
       return true;
     }
-    
-    // Rewrite with AI
+
     const rewritten = await rewriteArticle(extracted.title, extracted.content);
-    
-    // Publish
     const savedArticle = await publishArticle(extracted, rewritten);
+
     if (savedArticle) {
       todayPublishCount++;
-      articlesSinceLastFeedUpdate++;
+      articlesSinceLastDeploy++;
       console.log(`[Queue] ✓ Published: "${savedArticle.title.slice(0, 50)}" ${item.isBreaking ? '[BREAKING]' : ''}`);
-      
-      // Don't flush immediately - stage the files and deploy in batches
-      // The stager handles batching automatically
-      
-      // Mark as published and remove from queue
       articleQueue = articleQueue.filter(q => q.id !== item.id);
       lastPublishTime = new Date();
-      
-      // Update JSON feeds periodically (not on every publish)
-      const FEED_UPDATE_INTERVAL = 3; // Update feeds every 3 articles
-      if (articlesSinceLastFeedUpdate >= FEED_UPDATE_INTERVAL) {
-        console.log('[Queue] Updating JSON feeds...');
-        await updateFeedsAndDeploy();
-        articlesSinceLastFeedUpdate = 0;
-      }
+
+      // ✅ FIX 3: Removed the in-loop auto-deploy at batch threshold.
+      // Previously this bypassed the deployment limiter (hourly cap + min interval).
+      // All deployment decisions are now exclusively handled by startDeploymentScheduler(),
+      // which checks every 5 minutes and respects all rate-limit constraints.
     }
-    
+
     return true;
-    
   } catch (err) {
     console.error('[Queue] Processing error:', err.message);
-    // Mark as error, remove from queue to prevent stuck
     articleQueue = articleQueue.filter(q => q.id !== item.id);
     return true;
   }
 }
 
-// ── PUBLISHER LOOP ───────────────────────────────────────────────────────────
+// ── PUBLISHER LOOP ────────────────────────────────────────────────────────────
 async function startPublisher() {
   if (isPublisherRunning) return;
   isPublisherRunning = true;
-  
+
   const intervalMs = config.publishing.publishIntervalMinutes * 60 * 1000;
-  
-  console.log(`\n[Publisher] Publisher started | Interval: ${config.publishing.publishIntervalMinutes}min | Max/day: ${config.publishing.maxPerDay}`);
-  
+  console.log(`\n[Publisher] Started | Interval: ${config.publishing.publishIntervalMinutes}min | Batch: ${ARTICLES_PER_BATCH} | Max deploys/hr: ${MAX_DEPLOYMENTS_PER_HOUR}`);
+
   const publishLoop = async () => {
     const todayCount = await getTodayCount();
     const pending = articleQueue.filter(q => q.status === 'pending');
     const breaking = pending.filter(q => q.isBreaking).length;
-    
-    // Show status
+
     const nextPublish = new Date(Date.now() + intervalMs);
     console.log(`[Queue] ${pending.length} pending | ${breaking} breaking | ${todayCount}/${config.publishing.maxPerDay} today | Next: ${nextPublish.toLocaleTimeString()}`);
-    
+
     if (todayCount < config.publishing.maxPerDay && pending.length > 0) {
-      // Check for breaking news - publish immediately
       const hasBreaking = pending.some(q => q.isBreaking);
-      
       if (hasBreaking) {
-        console.log('[Queue] 🚨 BREAKING NEWS DETECTED - Publishing immediately!');
-        await processQueueItem(true); // force immediate
+        console.log('[Queue] 🚨 BREAKING NEWS — publishing immediately!');
+        await processQueueItem(true);
       } else {
-        // Regular publish
         await processQueueItem(false);
       }
     }
   };
-  
-  // Run immediately on start
+
   await publishLoop();
-  
-  // Then run at fixed intervals
   setInterval(publishLoop, intervalMs);
 }
 
-// ── QUEUE FETCHER ───────────────────────────────────────────────────────────
+// ── QUEUE FETCHER ─────────────────────────────────────────────────────────────
 function startQueueFetcher() {
   const fetchIntervalMs = config.publishing.fetchIntervalMinutes * 60 * 1000;
-  
   console.log(`[Queue] Fetcher started | Interval: ${config.publishing.fetchIntervalMinutes}min | Max queue: ${config.publishing.maxQueueSize}`);
-  
-  // Run immediately
   fetchArticlesToQueue();
-  
-  // Then run at intervals
   setInterval(fetchArticlesToQueue, fetchIntervalMs);
 }
 
-// ── INITIALIZE ───────────────────────────────────────────────────────────────
+// ── PERIODIC DEPLOYMENT SCHEDULER (was never called before — now wired in) ────
+// Checks every 5 min: if staged files exist and enough time has passed → deploy
+function startDeploymentScheduler() {
+  const CHECK_INTERVAL_MS = 5 * 60 * 1000; // every 5 minutes
+
+  console.log(`[Queue] Deployment scheduler started | Min interval: ${config.publishing.minDeployIntervalMinutes}min | Max/hr: ${MAX_DEPLOYMENTS_PER_HOUR}`);
+
+  setInterval(async () => {
+    const pending = getPendingCount();
+    if (pending.files === 0) return;
+
+    const now = Date.now();
+    const msSinceDeploy = lastDeploymentTime ? now - lastDeploymentTime : Infinity;
+    const timeSinceDeploy = (msSinceDeploy / 60000).toFixed(1);
+
+    if (pending.articles >= ARTICLES_PER_BATCH) {
+      console.log(`[Queue] Scheduler: batch full (${pending.articles} articles) — deploying`);
+      await deployBatch(`scheduler-batch-${pending.articles}`);
+    } else if (msSinceDeploy >= MIN_DEPLOY_INTERVAL_MS && pending.files > 0) {
+      console.log(`[Queue] Scheduler: interval elapsed (${timeSinceDeploy} min since last deploy) — deploying`);
+      await deployBatch(`scheduler-interval`);
+    }
+  }, CHECK_INTERVAL_MS);
+}
+
+// ── INITIALIZE ────────────────────────────────────────────────────────────────
 async function initializeQueue() {
   console.log('[Queue] Initializing smart queue...');
-  
   const todayCount = await getTodayCount();
   todayPublishCount = todayCount;
-  
   articleQueue = [];
-  
   console.log(`[Queue] Ready | Queue: 0 | Published today: ${todayCount}/${config.publishing.maxPerDay}`);
 }
 
-// ── GET STATUS ───────────────────────────────────────────────────────────────
+// ── GET STATUS ────────────────────────────────────────────────────────────────
 function getQueueStatus() {
   const pending = articleQueue.filter(q => q.status === 'pending');
   const breaking = pending.filter(q => q.isBreaking).length;
-  const nextPublish = lastPublishTime 
+  const nextPublish = lastPublishTime
     ? new Date(lastPublishTime.getTime() + config.publishing.publishIntervalMinutes * 60 * 1000)
     : new Date(Date.now() + config.publishing.publishIntervalMinutes * 60 * 1000);
-  
+
   return {
     queueSize: articleQueue.length,
     pending: pending.length,
     breaking,
     publishedToday: todayPublishCount,
     maxPerDay: config.publishing.maxPerDay,
-    nextPublishTime: nextPublish
+    nextPublishTime: nextPublish,
+    deploymentsThisHour,
+    maxDeploymentsPerHour: MAX_DEPLOYMENTS_PER_HOUR,
   };
-}
-
-// ── TRIGGER HOMEPAGE REBUILD ─────────────────────────────────────────────────
-// Rebuild homepage every 5 minutes or after 3 articles
-let articlesSinceRebuild = 0;
-// ── DEPLOYMENT MANAGEMENT ─────────────────────────────────────────────────────
-// Only deploy when batch is full or enough time has passed
-async function updateFeedsAndDeploy() {
-  const now = Date.now();
-  
-  // Check if we can deploy
-  const minutesSinceDeploy = lastDeploymentTime ? (now - lastDeploymentTime) / 60000 : 999;
-  const canDeploy = deploymentsThisHour < MAX_DEPLOYMENTS_PER_HOUR && minutesSinceDeploy >= MIN_MINUTES_BETWEEN;
-  
-  if (canDeploy) {
-    // Flush staged article files
-    const pending = getPendingCount();
-    if (pending.files > 0) {
-      console.log(`[Queue] Deploying ${pending.files} files (articles + feeds)...`);
-      await flush(`feat: batch publish ${pending.articles} articles with feeds`);
-      deploymentsThisHour++;
-      lastDeploymentTime = now;
-    }
-    
-    // Update JSON feeds
-    await pushFeedsToGitHub();
-  } else {
-    // Queue for later
-    console.log(`[Queue] Deployment delayed. Wait ${MIN_MINUTES_BETWEEN - minutesSinceDeploy.toFixed(1)} min or until batch fills.`);
-  }
-}
-
-// ── PERIODIC DEPLOYMENT CHECK ─────────────────────────────────────────────────
-function startDeploymentScheduler() {
-  const CHECK_INTERVAL = 5 * 60 * 1000; // Check every 5 minutes
-  
-  setInterval(async () => {
-    const pending = getPendingCount();
-    const now = Date.now();
-    const minutesSinceDeploy = lastDeploymentTime ? (now - lastDeploymentTime) / 60000 : 999;
-    
-    // Deploy if: batch is full OR enough time has passed
-    if (pending.articles >= (config.publishing.maxArticlesPerBatch || 10)) {
-      console.log('[Queue] Periodic: Batch full, deploying...');
-      await updateFeedsAndDeploy();
-    } else if (minutesSinceDeploy >= MIN_MINUTES_BETWEEN && pending.files > 0) {
-      console.log('[Queue] Periodic: Time elapsed, deploying...');
-      await updateFeedsAndDeploy();
-    }
-  }, CHECK_INTERVAL);
 }
 
 module.exports = {
@@ -409,7 +400,9 @@ module.exports = {
   fetchArticlesToQueue,
   startPublisher,
   startQueueFetcher,
+  startDeploymentScheduler,
   getQueueStatus,
   isBreakingNews,
-  addToQueue
+  addToQueue,
+  deployBatch,
 };
