@@ -55,21 +55,29 @@ const config = {
 
   // ── Publishing ────────────────────────────────────────────
   publishing: {
-    maxPerDay: parseInt(process.env.MAX_ARTICLES_PER_DAY || '30', 10),
+    maxPerDay: parseInt(process.env.MAX_ARTICLES_PER_DAY || '100', 10),
     maxArticlesPerBatch: parseInt(process.env.MAX_ARTICLES_PER_BATCH || '10', 10),
-    fetchIntervalMinutes: parseInt(process.env.FETCH_INTERVAL_MINUTES || '45', 10),
+    fetchIntervalMinutes: parseInt(process.env.FETCH_INTERVAL_MINUTES || '10', 10),
+    publishIntervalMinutes: parseInt(process.env.PUBLISH_INTERVAL_MINUTES || '14', 10),
     postPublishDelayMinutes: parseInt(process.env.POST_PUBLISH_DELAY_MINUTES || '5', 10),
     cleanupMonths: 24,
+    maxQueueSize: parseInt(process.env.MAX_QUEUE_SIZE || '20', 10),
+    queueStaleHours: parseInt(process.env.QUEUE_STALE_HOURS || '6', 10),
+    // Deployment limiter - prevents excessive Cloudflare Pages builds
+    maxDeploymentsPerHour: parseInt(process.env.MAX_DEPLOYMENTS_PER_HOUR || '3', 10),
+    // Breaking news detection
+    breakingNewsKeywords: ['breaking', 'urgent', 'live', 'alert', 'emergency', 'explosion', 'earthquake', 'attack', 'terror', 'shooting', 'flood', 'hurricane', 'volcano', 'crisis', 'devastating', 'breaking news'],
+    breakingNewsAgeMinutes: parseInt(process.env.BREAKING_NEWS_AGE_MINUTES || '10', 10),
     // Daily target per category to prevent starvation
     categoryTargets: {
-      technology: 6,
-      business: 4,
-      finance: 4,
-      sports: 4,
-      science: 3,
-      politics: 3,
-      world: 5,
-      general: 5
+      technology: 10,
+      business: 8,
+      finance: 8,
+      sports: 8,
+      science: 6,
+      politics: 6,
+      world: 10,
+      general: 10
     }
   },
 
