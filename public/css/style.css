@@ -413,6 +413,38 @@ select {
   border-color: var(--gray-300);
 }
 
+/* Breaking News Tag */
+.breaking-tag {
+  display: inline-block;
+  background: var(--accent);
+  color: var(--white);
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  margin-right: 8px;
+  vertical-align: middle;
+  animation: breaking-pulse 2s ease-in-out infinite;
+}
+
+.breaking-tag--large {
+  font-size: 13px;
+  padding: 5px 12px;
+  margin-bottom: 8px;
+}
+
+@keyframes breaking-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+.article-card .breaking-tag {
+  margin-bottom: 6px;
+}
+
 /* ============================================================
    MAIN LAYOUT
    ============================================================ */
