@@ -20,7 +20,7 @@ const SOURCE_TYPES = {
   RSS: 'rss',
   NEWS_API: 'newsapi',
   GDELT: 'gdelt',
-  CONTEXTUAL_WEB: 'contextualweb',
+  GNEWS: 'gnews',
   GOOGLE_NEWS: 'google_news',
   SCRAPER: 'scraper'
 };
@@ -206,31 +206,37 @@ async function fetchGdelt(query = 'news', mode = 'artlist', maxRecords = 25) {
   }
 }
 
-// ── CONTEXTUALWEB NEWS API ──────────────────────────────────────────────────────
-async function fetchContextualWeb(category = 'general', pageSize = 25) {
-  if (!config.contextualWeb?.apiKey) return [];
+// ── GNEWS API (gnews.io) ───────────────────────────────────────────────────────
+async function fetchGNews(category = 'general', pageSize = 15) {
+  if (!config.gnews?.apiKey) return [];
   try {
-    const country = config.contextualWeb.country || 'us';
-    const url = `https://contextualwebsearch-websearch-v1.p.rapidapi.com/api/search/NewsSearchAPI?autoCorrect=true&pageNumber=1&pageSize=${pageSize}&q=${encodeURIComponent(CATEGORY_QUERIES[category] || 'news')}&safeSearch=false`;
-    const res = await axios.get(url, {
-      timeout: 15000,
-      headers: {
-        'X-RapidAPI-Key': config.contextualWeb.apiKey,
-        'X-RapidAPI-Host': 'contextualwebsearch-websearch-v1.p.rapidapi.com'
-      }
-    });
-    return (res.data?.value || []).map(a => ({
+    const country = config.gnews.country || 'us';
+    const lang = config.gnews.language || 'en';
+    
+    // GNews uses 'technology' instead of 'tech', 'business' instead of 'finance' in some cases.
+    // We can just use their built in categories
+    const validCategories = ['general', 'world', 'nation', 'business', 'technology', 'entertainment', 'sports', 'science', 'health'];
+    let gnewsCat = category;
+    if (category === 'finance') gnewsCat = 'business';
+    if (category === 'politics') gnewsCat = 'nation';
+    if (!validCategories.includes(gnewsCat)) gnewsCat = 'general';
+
+    const url = `https://gnews.io/api/v4/top-headlines?category=${gnewsCat}&lang=${lang}&country=${country}&max=${pageSize}&apikey=${config.gnews.apiKey}`;
+    
+    const res = await axios.get(url, { timeout: 15000 });
+    
+    return (res.data?.articles || []).map(a => ({
       url: a.url,
       title: a.title || '',
-      sourceName: a.provider?.name || 'ContextualWeb',
-      sourceType: SOURCE_TYPES.CONTEXTUAL_WEB,
+      sourceName: a.source?.name || 'GNews',
+      sourceType: SOURCE_TYPES.GNEWS,
       category,
-      pubDate: a.datePublished ? new Date(a.datePublished) : new Date(),
-      imageUrl: a.image?.thumbnail || null,
+      pubDate: a.publishedAt ? new Date(a.publishedAt) : new Date(),
+      imageUrl: a.image || null,
       description: a.description || '',
     }));
   } catch (err) {
-    console.error(`[NewsSources] ContextualWeb error: ${err.message}`);
+    console.error(`[NewsSources] GNews error: ${err.message}`);
     return [];
   }
 }
@@ -401,11 +407,11 @@ async function collectAllNews(categoryStats = {}) {
     }
   }
   
-  // 4. Fetch from ContextualWeb if enabled
-  if (config.contextualWeb?.apiKey) {
-    console.log('[NewsSources] Fetching from ContextualWeb...');
+  // 4. Fetch from GNews if enabled
+  if (config.gnews?.apiKey) {
+    console.log('[NewsSources] Fetching from GNews...');
     for (const cat of config.categories) {
-      const items = await fetchContextualWeb(cat, 15);
+      const items = await fetchGNews(cat, 15);
       allItems.push(...items);
     }
   }
@@ -505,7 +511,7 @@ module.exports = {
   fetchRssFeed,
   fetchNewsApi,
   fetchGdelt,
-  fetchContextualWeb,
+  fetchGNews,
   scrapeGoogleNews,
   scrapeWebsite,
   SOURCE_TYPES,
