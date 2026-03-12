@@ -1,13 +1,13 @@
 'use strict';
 /**
  * article-queue.js
- * SMART QUEUE SYSTEM with BREAKING NEWS MODE
+ * OPTIMIZED SMART QUEUE SYSTEM
  * 
  * Features:
- * - Small queue buffer (max 10 articles)
- * - Always prioritizes newest articles
- * - Removes stale articles (>6 hours old)
- * - Breaking news detection (publishes immediately)
+ * - Batch publishing: accumulate articles before deploying
+ * - Deployment limiter: max X deployments per hour
+ * - JSON feeds: homepage loads dynamically, no rebuild needed
+ * - Breaking news detection: publishes immediately
  * - Fresh news prioritized throughout the day
  */
 
@@ -17,8 +17,10 @@ const { fetchAllSources } = require('./fetcher');
 const { extractArticle } = require('./extractor');
 const { rewriteArticle } = require('./ai-rewriter');
 const { isDuplicate } = require('./duplicate-detector');
-const { publishArticle, getTodayCount, getTodayCategoryStats, rebuildAll } = require('./publisher');
-const { flushStagedArticles } = require('./article-stager');
+const { publishArticle, getTodayCount, getTodayCategoryStats } = require('./publisher');
+const { stageFiles, flush, getPendingCount } = require('./article-stager');
+const { pushFiles } = require('./github-pusher');
+const { updateAllFeeds, pushFeedsToGitHub } = require('./json-feeds');
 
 const supabase = createClient(config.supabase.url, config.supabase.serviceKey);
 
@@ -27,9 +29,16 @@ let articleQueue = [];
 let isPublisherRunning = false;
 let isFetcherRunning = false;
 let lastPublishTime = null;
-let lastHomepageRebuild = null;
-let homepageRebuildPending = false;
 let todayPublishCount = 0;
+let articlesSinceLastFeedUpdate = 0;
+let lastFeedUpdateTime = null;
+
+// Deployment limiter
+let deploymentQueue = [];
+let lastDeploymentTime = null;
+let deploymentsThisHour = 0;
+const MAX_DEPLOYMENTS_PER_HOUR = config.publishing?.maxDeploymentsPerHour || 3;
+const MIN_MINUTES_BETWEEN = 20; // At least 20 minutes between deployments
 
 // ── BREAKING NEWS DETECTION ─────────────────────────────────────────────────
 function isBreakingNews(item) {
@@ -234,17 +243,23 @@ async function processQueueItem(forceImmediate = false) {
     const savedArticle = await publishArticle(extracted, rewritten);
     if (savedArticle) {
       todayPublishCount++;
+      articlesSinceLastFeedUpdate++;
       console.log(`[Queue] ✓ Published: "${savedArticle.title.slice(0, 50)}" ${item.isBreaking ? '[BREAKING]' : ''}`);
       
-      // Flush staged files to GitHub immediately
-      await flushStagedArticles();
+      // Don't flush immediately - stage the files and deploy in batches
+      // The stager handles batching automatically
       
       // Mark as published and remove from queue
       articleQueue = articleQueue.filter(q => q.id !== item.id);
       lastPublishTime = new Date();
       
-      // Trigger homepage rebuild after publish (async, don't wait)
-      triggerHomepageRebuild();
+      // Update JSON feeds periodically (not on every publish)
+      const FEED_UPDATE_INTERVAL = 3; // Update feeds every 3 articles
+      if (articlesSinceLastFeedUpdate >= FEED_UPDATE_INTERVAL) {
+        console.log('[Queue] Updating JSON feeds...');
+        await updateFeedsAndDeploy();
+        articlesSinceLastFeedUpdate = 0;
+      }
     }
     
     return true;
@@ -342,30 +357,51 @@ function getQueueStatus() {
 // ── TRIGGER HOMEPAGE REBUILD ─────────────────────────────────────────────────
 // Rebuild homepage every 5 minutes or after 3 articles
 let articlesSinceRebuild = 0;
-async function triggerHomepageRebuild() {
-  articlesSinceRebuild++;
+// ── DEPLOYMENT MANAGEMENT ─────────────────────────────────────────────────────
+// Only deploy when batch is full or enough time has passed
+async function updateFeedsAndDeploy() {
   const now = Date.now();
-  const timeSinceRebuild = lastHomepageRebuild ? now - lastHomepageRebuild.getTime() : 999999;
-  const rebuildEveryMinutes = 5;
-  const rebuildAfterArticles = 3;
   
-  // Rebuild if enough time passed OR enough articles published
-  if (timeSinceRebuild > rebuildEveryMinutes * 60 * 1000 || articlesSinceRebuild >= rebuildAfterArticles) {
-    if (!homepageRebuildPending) {
-      homepageRebuildPending = true;
-      console.log('[Queue] Triggering homepage rebuild...');
-      try {
-        await rebuildAll();
-        lastHomepageRebuild = new Date();
-        articlesSinceRebuild = 0;
-        console.log('[Queue] Homepage rebuild complete.');
-      } catch (err) {
-        console.error('[Queue] Homepage rebuild error:', err.message);
-      } finally {
-        homepageRebuildPending = false;
-      }
+  // Check if we can deploy
+  const minutesSinceDeploy = lastDeploymentTime ? (now - lastDeploymentTime) / 60000 : 999;
+  const canDeploy = deploymentsThisHour < MAX_DEPLOYMENTS_PER_HOUR && minutesSinceDeploy >= MIN_MINUTES_BETWEEN;
+  
+  if (canDeploy) {
+    // Flush staged article files
+    const pending = getPendingCount();
+    if (pending.files > 0) {
+      console.log(`[Queue] Deploying ${pending.files} files (articles + feeds)...`);
+      await flush(`feat: batch publish ${pending.articles} articles with feeds`);
+      deploymentsThisHour++;
+      lastDeploymentTime = now;
     }
+    
+    // Update JSON feeds
+    await pushFeedsToGitHub();
+  } else {
+    // Queue for later
+    console.log(`[Queue] Deployment delayed. Wait ${MIN_MINUTES_BETWEEN - minutesSinceDeploy.toFixed(1)} min or until batch fills.`);
   }
+}
+
+// ── PERIODIC DEPLOYMENT CHECK ─────────────────────────────────────────────────
+function startDeploymentScheduler() {
+  const CHECK_INTERVAL = 5 * 60 * 1000; // Check every 5 minutes
+  
+  setInterval(async () => {
+    const pending = getPendingCount();
+    const now = Date.now();
+    const minutesSinceDeploy = lastDeploymentTime ? (now - lastDeploymentTime) / 60000 : 999;
+    
+    // Deploy if: batch is full OR enough time has passed
+    if (pending.articles >= (config.publishing.maxArticlesPerBatch || 10)) {
+      console.log('[Queue] Periodic: Batch full, deploying...');
+      await updateFeedsAndDeploy();
+    } else if (minutesSinceDeploy >= MIN_MINUTES_BETWEEN && pending.files > 0) {
+      console.log('[Queue] Periodic: Time elapsed, deploying...');
+      await updateFeedsAndDeploy();
+    }
+  }, CHECK_INTERVAL);
 }
 
 module.exports = {
