@@ -5,8 +5,16 @@
     <link>https://the-hidden-reporter.pages.dev</link>
     <description>Uncovering stories behind the headlines.</description>
     <language>en-us</language>
-    <lastBuildDate>Fri, 13 Mar 2026 20:36:16 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 13 Mar 2026 20:53:14 GMT</lastBuildDate>
     <atom:link href="https://the-hidden-reporter.pages.dev/feed.xml" rel="self" type="application/rss+xml"/>
+  <item>
+    <title><![CDATA[Cincinnati Fires Men's Basketball Coach Wes Miller After 5 Seasons]]></title>
+    <link>https://the-hidden-reporter.pages.dev/articles/sports/cincinnati-fires-mens-basketball-coach-wes-miller-after-5-seasons-mmpdhmku.html</link>
+    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/sports/cincinnati-fires-mens-basketball-coach-wes-miller-after-5-seasons-mmpdhmku.html</guid>
+    <description><![CDATA[Cincinnati has fired men's basketball coach Wes Miller after five seasons, citing the team's inability to reach the NCAA tournament. Miller's contract states that he is owed $9.9 million if fired before March 31, 2026.]]></description>
+    <pubDate>Fri, 13 Mar 2026 20:52:13 GMT</pubDate>
+    <category>sports</category>
+  </item>
   <item>
     <title><![CDATA[Titans Release CB L'Jarius Sneed, Clear $11.4M in Cap Space]]></title>
     <link>https://the-hidden-reporter.pages.dev/articles/sports/titans-release-cb-ljarius-sneed-clear-dollar114m-in-cap-space-mmp89esr.html</link>
@@ -237,14 +245,6 @@
     <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/can-snacks-really-help-you-sleep-mmlxqy3m.html</guid>
     <description><![CDATA[Alice Mushrooms' Nightcap chocolate, featuring reishi mushrooms and chamomile, claims to improve sleep quality. However, the scientific evidence behind its ingredients is mixed, with some effects being short-term and influenced by placebo effects.]]></description>
     <pubDate>Fri, 06 Mar 2026 00:05:51 GMT</pubDate>
-    <category>technology</category>
-  </item>
-  <item>
-    <title><![CDATA[London Transport Hack Exposed 10 Million People's Data, BBC Investigation Finds]]></title>
-    <link>https://the-hidden-reporter.pages.dev/articles/technology/london-transport-hack-exposed-10-million-peoples-data-bbc-investigation-finds-mmlxwsnu.html</link>
-    <guid isPermaLink="true">https://the-hidden-reporter.pages.dev/articles/technology/london-transport-hack-exposed-10-million-peoples-data-bbc-investigation-finds-mmlxwsnu.html</guid>
-    <description><![CDATA[A BBC investigation has revealed that the 2024 Transport for London hack affected around 10 million people, exposing their personal data. The cyber-attack caused £39m in damages and disrupted TfL's online services.]]></description>
-    <pubDate>Fri, 06 Mar 2026 00:05:12 GMT</pubDate>
     <category>technology</category>
   </item>
   </channel>
