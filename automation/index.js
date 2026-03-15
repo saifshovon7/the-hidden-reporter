@@ -20,7 +20,8 @@ const { fetchAllSources, markProcessed } = require('./fetcher');
 const { extractArticle } = require('./extractor');
 const { rewriteArticle } = require('./ai-rewriter');
 const { isDuplicate } = require('./duplicate-detector');
-const { publishArticle, getTodayCount, getTodayCategoryStats, rebuildArticlesOnly, flushStagedArticles } = require('./publisher');
+const { publishArticle, getTodayCount, getTodayCategoryStats, rebuildArticlesOnly } = require('./publisher');
+const { deployBatch } = require('./article-queue');
 const { updateTrending } = require('./trending-detector');
 const { runCleanup } = require('./cleanup');
 const { generateSitemap } = require('./sitemap-generator');
@@ -73,7 +74,8 @@ async function runPipeline() {
 
     const itemsToProcess = fetchedItems.slice(0, remaining);
     let published = 0;
-    const processedUrls = [];
+    const processedUrls = [];   // Only URLs that were successfully published
+    const duplicateUrls = [];   // URLs that were confirmed duplicates
 
     for (let i = 0; i < itemsToProcess.length; i++) {
       const item = itemsToProcess[i];
@@ -90,10 +92,10 @@ async function runPipeline() {
       try {
         const extracted = await extractArticle(item);
 
-        const dup = await isDuplicate(extracted.sourceUrl, extracted.title, extracted.content);
+        const dup = await isDuplicate(extracted.sourceUrl, extracted.title);
         if (dup) {
           console.log(`[Pipeline] Duplicate — skipping.`);
-          processedUrls.push(item.url);
+          duplicateUrls.push(item.url); // mark duplicate as processed so it's not re-fetched
           continue;
         }
 
@@ -105,9 +107,9 @@ async function runPipeline() {
           published++;
           categoryStats[savedArticle.category] = (categoryStats[savedArticle.category] || 0) + 1;
           console.log(`[Pipeline] ✓ Published (${published} today): "${savedArticle.title.slice(0, 60)}" [${savedArticle.category}]`);
+          processedUrls.push(item.url); // only mark as processed on success
         }
-
-        processedUrls.push(item.url);
+        // If savedArticle is null (daily limit), do NOT mark as processed — allow retry
 
         const isLast = (i === itemsToProcess.length - 1);
         const willHitLimit = (currentCount + published) >= config.publishing.maxPerDay;
@@ -119,14 +121,15 @@ async function runPipeline() {
 
       } catch (err) {
         console.error(`[Pipeline] Error processing ${item.url}: ${err.message}`);
-        processedUrls.push(item.url);
+        // Do NOT push to processedUrls on error — allow the article to be retried next run
       }
     }
 
-    await markProcessed(processedUrls);
+    await markProcessed([...processedUrls, ...duplicateUrls]);
 
     if (published > 0) {
-      await flushStagedArticles();
+      // Use deployBatch for a complete commit: article HTML + JSON feeds + RSS + search index
+      await deployBatch('once-mode-final');
     }
 
     if (published > 0) {
@@ -221,11 +224,13 @@ async function startScheduler() {
   // ✅ FIX 4: Only rebuild article HTML files + JSON feeds on startup.
   // Homepage and category pages are now static skeletons that load content
   // dynamically from JSON feeds — they never need to be re-committed.
+  // rebuildArticlesOnly() catches all its own errors internally and always resolves.
+  // The .catch() below is unreachable but kept as a safety net.
   rebuildArticlesOnly().then(() => {
     // Start queue-based publishing system
     startQueuePipeline();
   }).catch(err => {
-    console.error('[Scheduler] Startup rebuild error:', err.message);
+    console.error('[Scheduler] Startup rebuild error (unexpected):', err.message);
     // Start publishing even if rebuild fails
     startQueuePipeline();
   });
