@@ -1,4 +1,6 @@
 'use strict';
+// WARNING: This file is NOT used. Deployment is handled by article-queue.js deployBatch().
+// This file is kept for reference only. Do not import it.
 /**
  * deployment-manager.js
  * Controls deployment frequency to prevent excessive Cloudflare Pages builds.
