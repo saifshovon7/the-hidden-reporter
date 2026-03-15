@@ -54,7 +54,10 @@ async function generateSitemap() {
   });
 
   // Article pages (last 24 months)
-  const since = new Date(Date.now() - 24 * 30 * 24 * 60 * 60 * 1000).toISOString();
+  // Use calendar-month arithmetic to match cleanup.js cutoff logic (setMonth - 24)
+  const sinceDate = new Date();
+  sinceDate.setMonth(sinceDate.getMonth() - 24);
+  const since = sinceDate.toISOString();
   const { data: articles, error } = await supabase
     .from('articles')
     .select('slug, category, publish_date, updated_at')
