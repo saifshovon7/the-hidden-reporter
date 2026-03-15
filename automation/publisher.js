@@ -113,7 +113,7 @@ async function getRelatedArticles(tags, category, excludeSlug) {
   if (!tags?.length) {
     const { data } = await supabase
       .from('articles')
-      .select('id, title, slug, category, publish_date, featured_image_url, summary')
+      .select('id, title, slug, category, publish_date, site_publish_date, featured_image_url, summary, source_name')
       .eq('category', category)
       .neq('slug', excludeSlug)
       .order('publish_date', { ascending: false })
@@ -123,7 +123,7 @@ async function getRelatedArticles(tags, category, excludeSlug) {
 
   const { data } = await supabase
     .from('articles')
-    .select('id, title, slug, category, publish_date, featured_image_url, summary')
+    .select('id, title, slug, category, publish_date, site_publish_date, featured_image_url, summary, source_name')
     .overlaps('tags', tags)
     .neq('slug', excludeSlug)
     .order('trend_score', { ascending: false })
@@ -226,23 +226,31 @@ async function buildCategoryPages(ads) {
 
 // ── Rebuild search index ──────────────────────────────────────────────────────
 async function buildSearchIndex() {
-  const { data: articles } = await supabase
+  const { data: articles, error } = await supabase
     .from('articles')
     .select('title, slug, summary, category, site_publish_date, publish_date, source_name, featured_image_url')
     .order('site_publish_date', { ascending: false })
     .limit(500);
 
+  if (error) {
+    console.error('[Publisher] buildSearchIndex DB error:', error.message);
+    throw error; // Don't commit an empty search index on DB error
+  }
   return generateSearchIndex(articles || []);
 }
 
 // ── Rebuild RSS feed ──────────────────────────────────────────────────────────
 async function buildRssFeed() {
-  const { data: articles } = await supabase
+  const { data: articles, error } = await supabase
     .from('articles')
     .select('title, slug, summary, category, site_publish_date, publish_date, source_name')
     .order('site_publish_date', { ascending: false })
     .limit(30);
 
+  if (error) {
+    console.error('[Publisher] buildRssFeed DB error:', error.message);
+    throw error; // Don't commit an empty feed on DB error
+  }
   return generateRssFeed(articles || []);
 }
 
@@ -492,7 +500,7 @@ async function rebuildImages() {
       const downloaded = await downloadImage(sourceImageUrl, imageSlug);
       if (!downloaded) { failed++; continue; }
 
-      const ok = await commitImageFile(downloaded);
+      const ok = await stageImageFile(downloaded);
       if (ok) {
         committed++;
         console.log(`[Publisher] rebuildImages: committed ${downloaded.localPath} (${committed}/${articles.length})`);
