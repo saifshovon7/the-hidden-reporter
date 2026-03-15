@@ -107,11 +107,11 @@ function generateOpenGraphTags(article) {
     `<meta property="og:type" content="article">`,
     `<meta property="og:url" content="${articleUrl}">`,
     `<meta property="og:title" content="${escapeAttr(ogTitle)}">`,
-    `<meta property="og:description" content="${escapeAttr(article.metaDescription || '')}">`,
+    `<meta property="og:description" content="${escapeAttr(article.metaDescription || article.meta_description || '')}">`,
     `<meta property="og:site_name" content="${escapeAttr(config.site.name)}">`,
     `<meta name="twitter:card" content="summary_large_image">`,
     `<meta name="twitter:title" content="${escapeAttr(ogTitle)}">`,
-    `<meta name="twitter:description" content="${escapeAttr(article.metaDescription || '')}">`,
+    `<meta name="twitter:description" content="${escapeAttr(article.metaDescription || article.meta_description || '')}">`,
   ];
   if (imageUrl) {
     lines.push(`<meta property="og:image" content="${escapeAttr(imageUrl)}">`);
