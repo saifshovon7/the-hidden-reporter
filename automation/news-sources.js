@@ -423,7 +423,7 @@ async function collectAllNews(categoryStats = {}) {
     const target = targets[cat] || 3;
     const currentCount = allItems.filter(i => i.category === cat).length;
     if (publishedToday + currentCount < target) {
-      console.log(`[NewsSources] Google News fallback for ${category} (need ${target - currentCount})`);
+      console.log(`[NewsSources] Google News fallback for ${cat} (need ${target - currentCount})`);
       const fallbackItems = await scrapeGoogleNews(cat, 15);
       allItems.push(...fallbackItems);
     }
