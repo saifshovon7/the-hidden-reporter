@@ -161,7 +161,7 @@ function generateArticleCard(article, size = 'small') {
 
 // ── Article page ──────────────────────────────────────────────────────────────
 function generateArticlePage(article, related = [], sidebarAd = '', inArticleAd = '', footerAd = '') {
-  const publishedStr = formatDisplayDate(new Date(article.publish_date));
+  const publishedStr = formatDisplayDate(new Date(article.site_publish_date || article.publish_date));
   const relatedHtml = related.length ? generateRelatedArticles(related) : '';
 
   const imageUrl = sanitizeImageUrl(article.featured_image_url);
@@ -274,7 +274,7 @@ function generateRelatedArticles(articles) {
         <a href="/category/${a.category}.html" class="card-category">${capitalize(a.category)}</a>
         <h4 class="card-title"><a href="${articlePath(a.category, a.slug)}">${escapeHtml(a.title)}</a></h4>
         <div class="card-meta">
-          <time>${timeAgo(new Date(a.publish_date))}</time>
+          <time>${timeAgo(new Date(a.site_publish_date || a.publish_date))}</time>
           <span class="card-meta-dot">·</span>
           <span>${escapeHtml(a.source_name)}</span>
         </div>
