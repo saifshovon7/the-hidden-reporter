@@ -115,7 +115,7 @@ function articlePath(category, slug) {
 function generateArticleCard(article, size = 'small') {
   const href = articlePath(article.category, article.slug);
   const hLevel = size === 'large' ? '2' : size === 'medium' ? '3' : '4';
-  const timeStr = timeAgo(new Date(article.publish_date));
+  const timeStr = timeAgo(new Date(article.site_publish_date || article.publish_date));
   const imgUrl = sanitizeImageUrl(article.featured_image_url);
   const imgHtml = imgUrl
     ? `<div class="card-img-wrap">
@@ -177,11 +177,12 @@ function generateArticlePage(article, related = [], sidebarAd = '', inArticleAd 
     return `<a href="/topic/${slug}.html" class="trending-tag">${escapeHtml(tag)}</a>`;
   }).join(' ');
 
-  // Split content at midpoint for in-article ad
-  const mid = Math.floor(article.content.length / 2);
-  const pBreak = article.content.lastIndexOf('</p>', mid);
-  const part1 = article.content.slice(0, pBreak + 4);
-  const part2 = article.content.slice(pBreak + 4);
+  // Split content at midpoint for in-article ad, with null guard
+  const content = article.content || '';
+  const mid = Math.floor(content.length / 2);
+  const pBreak = content.lastIndexOf('</p>', mid);
+  const part1 = pBreak >= 0 ? content.slice(0, pBreak + 4) : content;
+  const part2 = pBreak >= 0 ? content.slice(pBreak + 4) : '';
   const adBreak = inArticleAd
     ? `<aside class="in-article-ad" aria-label="Advertisement">${inArticleAd}</aside>`
     : '';
@@ -196,9 +197,9 @@ function generateArticlePage(article, related = [], sidebarAd = '', inArticleAd 
         <div class="article-meta">
           <strong itemprop="author">${escapeHtml(article.author || 'Staff Reporter')}</strong>
           <span class="article-meta-dot">·</span>
-          <time datetime="${new Date(article.publish_date).toISOString()}" itemprop="datePublished">${publishedStr}</time>
+          <time datetime="${new Date(article.site_publish_date || article.publish_date).toISOString()}" itemprop="datePublished">${publishedStr}</time>
           <span class="article-meta-dot">·</span>
-          <span>Source: <a href="${escapeAttr(article.source_url)}" rel="noopener noreferrer nofollow" target="_blank" itemprop="publisher">${escapeHtml(article.source_name)}</a></span>
+          <span>Source: <a href="${escapeAttr(encodeURI(article.source_url || ''))}" rel="noopener noreferrer nofollow" target="_blank" itemprop="publisher">${escapeHtml(article.source_name)}</a></span>
         </div>
       </header>
 
@@ -230,7 +231,7 @@ function generateArticlePage(article, related = [], sidebarAd = '', inArticleAd 
 
       <div class="article-source">
         Originally reported by <strong>${escapeHtml(article.source_name)}</strong>.
-        <a href="${escapeAttr(article.source_url)}" rel="noopener noreferrer nofollow" target="_blank">Read the original article →</a>
+        <a href="${escapeAttr(encodeURI(article.source_url || ''))}" rel="noopener noreferrer nofollow" target="_blank">Read the original article →</a>
       </div>
     </article>
 
