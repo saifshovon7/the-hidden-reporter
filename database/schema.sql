@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS articles (
   featured_image_url  TEXT,
   featured_image_credit TEXT,
   author              TEXT NOT NULL DEFAULT 'The Hidden Reporter Staff',
+  is_breaking         BOOLEAN NOT NULL DEFAULT false,
   related_articles    UUID[] DEFAULT '{}',
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -85,6 +86,9 @@ CREATE INDEX idx_articles_view_count    ON articles (view_count DESC);
 CREATE INDEX idx_articles_trend_score   ON articles (trend_score DESC);
 CREATE INDEX idx_articles_tags          ON articles USING GIN (tags);
 CREATE INDEX idx_articles_source_url    ON articles (source_url);
+
+-- Migrate existing databases: add is_breaking if it does not exist
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS is_breaking BOOLEAN NOT NULL DEFAULT false;
 
 -- Full-text search index
 CREATE INDEX idx_articles_fts ON articles
