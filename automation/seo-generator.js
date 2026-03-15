@@ -25,9 +25,11 @@ function generateSchemaMarkup(article) {
   const schema = {
     '@context':         'https://schema.org',
     '@type':            'NewsArticle',
-    'headline':          article.seoTitle || article.title,
-    'description':       article.metaDescription || article.summary || '',
-    'datePublished':     article.publishDate?.toISOString?.() || new Date().toISOString(),
+    'headline':          article.seoTitle || article.seo_title || article.title,
+    'description':       article.metaDescription || article.meta_description || article.summary || '',
+    'datePublished':     (article.publishDate instanceof Date ? article.publishDate.toISOString() : null)
+                         || article.publish_date
+                         || new Date().toISOString(),
     'dateModified':      new Date().toISOString(),
     'author': {
       '@type': 'Person',
@@ -47,10 +49,11 @@ function generateSchemaMarkup(article) {
     },
   };
 
-  if (article.featuredImageUrl) {
+  const imageUrl = article.featuredImageUrl || article.featured_image_url;
+  if (imageUrl) {
     schema.image = {
       '@type': 'ImageObject',
-      'url':   article.featuredImageUrl,
+      'url':   imageUrl,
     };
   }
 
@@ -98,19 +101,21 @@ function detectTopics(title, content, tags) {
 // ── Open Graph tags string ────────────────────────────────────────────────────
 function generateOpenGraphTags(article) {
   const articleUrl = `${config.site.url}/articles/${article.category || 'general'}/${article.slug}.html`;
+  const ogTitle = article.seoTitle || article.seo_title || article.title;
+  const imageUrl = article.featuredImageUrl || article.featured_image_url;
   const lines = [
     `<meta property="og:type" content="article">`,
     `<meta property="og:url" content="${articleUrl}">`,
-    `<meta property="og:title" content="${escapeAttr(article.seoTitle || article.title)}">`,
+    `<meta property="og:title" content="${escapeAttr(ogTitle)}">`,
     `<meta property="og:description" content="${escapeAttr(article.metaDescription || '')}">`,
     `<meta property="og:site_name" content="${escapeAttr(config.site.name)}">`,
     `<meta name="twitter:card" content="summary_large_image">`,
-    `<meta name="twitter:title" content="${escapeAttr(article.seoTitle || article.title)}">`,
+    `<meta name="twitter:title" content="${escapeAttr(ogTitle)}">`,
     `<meta name="twitter:description" content="${escapeAttr(article.metaDescription || '')}">`,
   ];
-  if (article.featuredImageUrl) {
-    lines.push(`<meta property="og:image" content="${escapeAttr(article.featuredImageUrl)}">`);
-    lines.push(`<meta name="twitter:image" content="${escapeAttr(article.featuredImageUrl)}">`);
+  if (imageUrl) {
+    lines.push(`<meta property="og:image" content="${escapeAttr(imageUrl)}">`);
+    lines.push(`<meta name="twitter:image" content="${escapeAttr(imageUrl)}">`);
   }
   return lines.join('\n    ');
 }
