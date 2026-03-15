@@ -56,7 +56,9 @@ async function isTitleDuplicate(title, threshold = 0.92) {
   const { data, error } = await supabase
     .from('articles')
     .select('title')
-    .gte('publish_date', since);
+    .gte('publish_date', since)
+    .order('publish_date', { ascending: false })
+    .limit(500);
 
   if (error) {
     console.error('[DuplicateDetector] Title check error:', error.message);
