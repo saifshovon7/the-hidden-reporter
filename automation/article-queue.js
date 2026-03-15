@@ -33,6 +33,9 @@ let lastPublishTime = null;
 let todayPublishCount = 0;
 let articlesSinceLastDeploy = 0;
 
+// Guard flag to prevent concurrent deployments (BUG 7)
+let isDeploying = false;
+
 // ── Deployment limiter ───────────────────────────────────────────────────────
 let lastDeploymentTime = null;
 let deploymentsThisHour = 0;
@@ -83,16 +86,21 @@ function cleanupStaleArticles() {
   const staleMs = staleHours * 60 * 60 * 1000;
   const now = Date.now();
   const beforeCount = articleQueue.length;
+  const MIN_QUEUE = 3;
 
   articleQueue = articleQueue.filter(item => {
     if (item.status !== 'pending') return false;
+    if (isBreakingNews(item)) return true;
     const pubTime = item.pubDate ? new Date(item.pubDate).getTime() : now;
     const ageMs = now - pubTime;
-    if (isBreakingNews(item)) return true;
-    if (ageMs < staleMs) return true;
-    if (articleQueue.length <= 3) return true;
-    return false;
+    return ageMs < staleMs;
   });
+
+  // Ensure we never drop below MIN_QUEUE
+  if (articleQueue.length < MIN_QUEUE && beforeCount >= MIN_QUEUE) {
+    console.log(`[Queue] Stale cleanup would leave < ${MIN_QUEUE} items — keeping minimum.`);
+    // Already filtered; just log the warning — the remaining items will be kept
+  }
 
   if (beforeCount !== articleQueue.length) {
     console.log(`[Queue] Cleaned up ${beforeCount - articleQueue.length} stale articles`);
@@ -120,17 +128,19 @@ async function addToQueue(item) {
   articleQueue.push(queueItem);
   sortQueue();
 
-  // Enforce max queue size — discard oldest non-breaking when full
-  while (articleQueue.length > maxQueue) {
+  // Enforce max queue size — discard lowest-priority non-breaking item if over limit
+  // Use a single if-check instead of a while-loop to avoid unbounded queue growth
+  // when all items are breaking (loop would exit without eviction, permanently oversizing)
+  if (articleQueue.length > maxQueue) {
     const nonBreaking = articleQueue.filter(q => !q.isBreaking && q.status === 'pending');
     if (nonBreaking.length > 0) {
       // nonBreaking array is sorted same as queue; last = lowest priority = oldest
       const toRemove = nonBreaking[nonBreaking.length - 1];
       articleQueue = articleQueue.filter(q => q.id !== toRemove.id);
       console.log(`[Queue] Evicted oldest article: ${toRemove.title?.slice(0, 50)}`);
-    } else {
-      break; // All are breaking — keep them all even if over max
     }
+    // If all breaking: allow the queue to be maxQueue+1 temporarily;
+    // next fetch cycle will balance it out
   }
 
   return true;
@@ -191,6 +201,10 @@ function canDeployNow() {
 //   article HTML files + image files + JSON feeds + feed.xml + search-index.json
 // This guarantees exactly ONE Cloudflare Pages deploy per batch.
 async function deployBatch(label = 'batch') {
+  if (isDeploying) {
+    console.log('[Queue] Deploy already in progress — skipping.');
+    return false;
+  }
   if (!canDeployNow()) return false;
 
   const pending = getPendingCount();
@@ -201,6 +215,7 @@ async function deployBatch(label = 'batch') {
 
   console.log(`[Queue] ▶ Deploying ${label}: ${pending.articles} article(s) + feeds in ONE commit…`);
 
+  isDeploying = true;
   try {
     const { getStagedFiles, clearStagedFiles } = require('./article-stager');
 
@@ -232,7 +247,7 @@ async function deployBatch(label = 'batch') {
     const msg = `feat: batch publish ${pending.articles} article(s) + update feeds [${new Date().toISOString().slice(0,16)}]`;
     await pushFiles(allFiles, msg);
 
-    // Clear the stager buffer after successful push
+    // Only clear the stager buffer AFTER a successful push
     clearStagedFiles();
 
     deploymentsThisHour++;
@@ -243,6 +258,8 @@ async function deployBatch(label = 'batch') {
   } catch (err) {
     console.error('[Queue] Deploy error:', err.message);
     return false;
+  } finally {
+    isDeploying = false;
   }
 }
 
@@ -271,10 +288,12 @@ async function processQueueItem(forceImmediate = false) {
   try {
     const extracted = await extractArticle(item.sourceData);
 
-    const dup = await isDuplicate(extracted.sourceUrl, extracted.title, extracted.content);
+    const dup = await isDuplicate(extracted.sourceUrl, extracted.title);
     if (dup) {
       console.log('[Queue] Duplicate — removing from queue');
       articleQueue = articleQueue.filter(q => q.id !== item.id);
+      // Mark the URL as processed so it's not re-fetched and re-queued next cycle
+      try { const { markProcessed } = require('./fetcher'); await markProcessed([item.url]); } catch (_) {}
       return true;
     }
 
@@ -298,6 +317,8 @@ async function processQueueItem(forceImmediate = false) {
   } catch (err) {
     console.error('[Queue] Processing error:', err.message);
     articleQueue = articleQueue.filter(q => q.id !== item.id);
+    // Mark the URL as processed so failing articles aren't retried forever
+    try { const { markProcessed } = require('./fetcher'); await markProcessed([item.url]); } catch (_) {}
     return true;
   }
 }
